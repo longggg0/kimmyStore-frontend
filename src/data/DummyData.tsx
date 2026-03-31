@@ -1,0 +1,73 @@
+export const products = [
+  {
+    id: '1',
+    name: 'Hydrating Rose Serum',
+    category: 'Serum',
+    price: 29.99,
+    image: 'https://images.unsplash.com/photo-1643379850623-7eb6442cd262?w=400&q=80',
+  },
+  {
+    id: '2',
+    name: 'Vitamin C Brightening Cream',
+    category: 'Moisturizer',
+    price: 34.99,
+    image: 'https://images.unsplash.com/photo-1667242003558-e42942d2b911?w=400&q=80',
+  },
+  {
+    id: '3',
+    name: 'Gentle Foaming Cleanser',
+    category: 'Cleanser',
+    price: 18.99,
+    image: 'https://images.unsplash.com/photo-1679394042786-5a287699d600?w=400&q=80',
+  },
+  {
+    id: '4',
+    name: 'SPF 50 Sunscreen Lotion',
+    category: 'Sun Care',
+    price: 22.99,
+    image: 'https://images.unsplash.com/photo-1665763630810-e6251bdd392d?w=400&q=80',
+  },
+  {
+    id: '5',
+    name: 'Retinol Night Repair',
+    category: 'Treatment',
+    price: 39.99,
+    image: 'https://images.unsplash.com/photo-1625920481077-2b5f2b723935?w=400&q=80',
+  },
+  {
+    id: '6',
+    name: 'Niacinamide Pore Toner',
+    category: 'Toner',
+    price: 19.99,
+    image: 'https://images.unsplash.com/photo-1655568560328-17285eff8d7e?w=400&q=80',
+  },
+  {
+    id: '7',
+    name: 'Collagen Eye Cream',
+    category: 'Eye Care',
+    price: 27.99,
+    image: 'https://images.unsplash.com/photo-1759563874711-b026ac0b6c6e?w=400&q=80',
+  },
+  {
+    id: '8',
+    name: 'Hyaluronic Acid Mist',
+    category: 'Mist',
+    price: 15.99,
+    image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400&q=80',
+  },
+];
+
+export const brandLogos = [
+  { id: 1, name: 'Brand 1', image: 'https://images.unsplash.com/photo-1759563874711-b026ac0b6c6e?w=400&q=80' },
+  { id: 2, name: 'Brand 2', image: 'https://images.unsplash.com/photo-1655568560328-17285eff8d7e?w=400&q=80' },
+  { id: 3, name: 'Brand 3', image: 'https://images.unsplash.com/photo-1625920481077-2b5f2b723935?w=400&q=80' },
+  { id: 4, name: 'Brand 4', image: 'https://images.unsplash.com/photo-1665763630810-e6251bdd392d?w=400&q=80' },
+  { id: 5, name: 'Brand 5', image: 'https://images.unsplash.com/photo-1523634118614-82b2685ee3df?w=400&q=80' },
+  { id: 6, name: 'Brand 6', image: 'https://images.unsplash.com/photo-1643379850623-7eb6442cd262?w=400&q=80' },
+  { id: 7, name: 'Brand 7', image: 'https://images.unsplash.com/photo-1679394042786-5a287699d600?w=400&q=80' },
+  { id: 8, name: 'Brand 8', image: 'https://images.unsplash.com/photo-1667242003558-e42942d2b911?w=400&q=80' },
+  { id: 9, name: 'Brand 9', image: 'https://images.unsplash.com/photo-1765964492963-b0aa8c172431?w=400&q=80' },
+  { id: 10, name: 'Brand 10', image: 'https://images.unsplash.com/photo-1690725219036-3c9f57a08837?w=400&q=80' },
+  { id: 11, name: 'Brand 11', image: 'https://images.unsplash.com/photo-1758738880475-dac2ab1c92d4?w=400&q=80' },
+  { id: 12, name: 'Brand 12', image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400&q=80' },
+];
