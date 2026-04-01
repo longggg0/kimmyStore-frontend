@@ -14,7 +14,7 @@ export  function Header() {
 
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-pink-300 to-pink-500 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-linear-to-br from-pink-300 to-pink-500 rounded-full flex items-center justify-center">
                 <span className="text-white">✨</span>
               </div>
               <span className="text-xl text-gray-900">Kimmy Skincare</span>
