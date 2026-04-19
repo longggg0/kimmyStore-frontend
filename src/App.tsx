@@ -8,6 +8,12 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import WishlistPage from "./pages/WishlistPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
+import Dashboard from "./Layouts/Dashboard";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { AdminProductsPage } from "./pages/AdminProductPage";
+import { AdminCategoryPage } from "./pages/AdminCategoryPage";
+import { AdminOrdersPage } from "./pages/AdminOrderPage";
+// import { AdminAddProductPage } from "./pages/AdminAddProductPage";
 
 
 export default function App() {
@@ -24,6 +30,13 @@ export default function App() {
           <Route path="/checkout-page" element={<CheckoutPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/order-history" element={<OrderHistoryPage />} />
+        </Route>
+        <Route element={<Dashboard/>} >
+          <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin-product" element={<AdminProductsPage/>}/>
+          <Route path="/admin-category" element={<AdminCategoryPage/>}/>
+          <Route path="/admin-order" element={<AdminOrdersPage/>}/>
+          {/* <Route path="/admin-addProduct" element={<AdminAddProductPage/>}/> */}
         </Route>
         
         
