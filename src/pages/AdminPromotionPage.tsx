@@ -42,11 +42,11 @@ const statusOf = (promo: Promotion) => {
 };
 
 export const AdminPromotionPage: React.FC = () => {
-  // ── Products (for the picker) ─────────────────────────────────────────────
+  //  Products (for the picker) 
   const { data: productData, isLoading: productsLoading, isError: productsError } = useProducts();
   const products: Product[] = productData?.data ?? [];
 
-  // ── Promotions from API ───────────────────────────────────────────────────
+  //  Promotions from API 
   const {
     data: promotionData,
     isLoading: promotionsLoading,
@@ -57,7 +57,7 @@ export const AdminPromotionPage: React.FC = () => {
   const createPromotion = useCreatePromotion();
   const deletePromotion = useDeletePromotion();
 
-  // ── Form state ────────────────────────────────────────────────────────────
+  //  Form state 
   const [search, setSearch] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -66,12 +66,12 @@ export const AdminPromotionPage: React.FC = () => {
   const [endDate, setEndDate] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // ── Multi-delete state ────────────────────────────────────────────────────
+  //  Multi-delete state 
   const [selectedPromoIds, setSelectedPromoIds] = useState<Set<number>>(new Set());
   const [deleteMode, setDeleteMode] = useState<"single" | "bulk" | "all" | null>(null);
   const [deleteSingleId, setDeleteSingleId] = useState<number | null>(null);
 
-  // ── Product picker helpers ────────────────────────────────────────────────
+  //  Product picker helpers 
   const filteredProducts = useMemo(
     () => products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase())),
     [search, products]
@@ -87,7 +87,7 @@ export const AdminPromotionPage: React.FC = () => {
 
   const isSelected = (product: Product) => selectedProducts.some((p) => p.id === product.id);
 
-  // ── Form validation ───────────────────────────────────────────────────────
+  //  Form validation 
   const canSubmit =
     selectedProducts.length > 0 &&
     Number(discountPercent) > 0 &&
@@ -97,7 +97,7 @@ export const AdminPromotionPage: React.FC = () => {
     endDate >= startDate &&
     !createPromotion.isPending;
 
-  // ── Submit: one API call per selected product ─────────────────────────────
+  //  Submit: one API call per selected product 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     try {
@@ -123,7 +123,7 @@ export const AdminPromotionPage: React.FC = () => {
     }
   };
 
-  // ── Delete helpers ────────────────────────────────────────────────────────
+  //  Delete helpers 
   const openDeleteSingle = (id: number) => { setDeleteSingleId(id); setDeleteMode("single"); };
   const openDeleteBulk   = () => setDeleteMode("bulk");
   const openDeleteAll    = () => setDeleteMode("all");
@@ -150,7 +150,7 @@ export const AdminPromotionPage: React.FC = () => {
 
   const handleDeleteCancel = () => { setDeleteMode(null); setDeleteSingleId(null); };
 
-  // ── Row selection helpers ─────────────────────────────────────────────────
+  // Row selection helpers
   const allSelected  = promotions.length > 0 && promotions.every((p) => selectedPromoIds.has(p.id));
   const someSelected = promotions.some((p) => selectedPromoIds.has(p.id));
 
@@ -172,7 +172,7 @@ export const AdminPromotionPage: React.FC = () => {
     return `Are you sure you want to remove all ${promotions.length} promotions? This action cannot be undone.`;
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  //Render
   return (
     <AdminLayout>
       <div className="space-y-8">
@@ -575,7 +575,7 @@ export const AdminPromotionPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Delete Confirm Dialog ─────────────────────────────────────────── */}
+      {/*  Delete Confirm Dialog */}
       {deleteMode !== null && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"

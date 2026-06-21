@@ -38,7 +38,7 @@ export interface CustomersResponse {
   data: (Customer & { token: string })[];
 }
 
-// Decoded JWT payload shape
+
 // Decoded JWT payload shape
 export interface AuthUser {
   id: number;

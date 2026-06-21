@@ -41,7 +41,7 @@ export const authService = {
     return response.json();
   },
 
-  // 👇 NEW: Send OTP to email
+  // Send OTP to email
   forgotPassword: async (email: string): Promise<{ message: string }> => {
     const response = await fetch(`${BASE_URL}/api/v1/auth/forgot-password`, {
       method: "POST",
@@ -55,7 +55,7 @@ export const authService = {
     return response.json();
   },
 
-  // 👇 NEW: Verify OTP
+  // Verify OTP
   verifyOtp: async (email: string, otp: string): Promise<{ message: string; resetToken: string }> => {
     const response = await fetch(`${BASE_URL}/api/v1/auth/verify-otp`, {
       method: "POST",
@@ -69,7 +69,7 @@ export const authService = {
     return response.json();
   },
 
-  // 👇 NEW: Reset Password
+  // Reset Password
   resetPassword: async (resetToken: string, newPassword: string): Promise<{ message: string }> => {
     const response = await fetch(`${BASE_URL}/api/v1/auth/reset-password`, {
       method: "POST",

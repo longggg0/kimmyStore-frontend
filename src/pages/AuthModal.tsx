@@ -46,7 +46,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     setForm({ username: '', email: '', phone: '', password: '', otp: '', newPassword: '' });
   };
 
-  // ── Login / Register ──────────────────────────────────────────
+  //  Login / Register 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let ok = false;
@@ -86,7 +86,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     }
   };
 
-  // ── Step 2: Verify OTP ────────────────────────────────────────
+  //  Step 2: Verify OTP 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpLoading(true);
@@ -102,7 +102,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     }
   };
 
-  // ── Step 3: Reset Password ────────────────────────────────────
+  //  Step 3: Reset Password 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setOtpLoading(true);
@@ -157,7 +157,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             </div>
           )}
 
-          {/* ── LOGIN ── */}
+          {/*  LOGIN  */}
           {mode === 'login' && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -308,7 +308,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             </form>
           )}
 
-          {/* ── FORGOT PASSWORD ── */}
+          {/*  FORGOT PASSWORD  */}
           {mode === 'forgot' && (
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <p className="text-sm text-gray-500">
@@ -348,7 +348,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             </form>
           )}
 
-          {/* ── VERIFY OTP ── */}
+          {/*  VERIFY OTP  */}
           {mode === 'verify-otp' && (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <p className="text-sm text-gray-500">
@@ -390,7 +390,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
             </form>
           )}
 
-          {/* ── RESET PASSWORD ── */}
+          {/*  RESET PASSWORD  */}
           {mode === 'reset' && (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <p className="text-sm text-gray-500">
