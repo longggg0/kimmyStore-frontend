@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { useLanguage } from '../Context/LanguageContext';
 
 export default function ContactPage() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,32 +27,28 @@ export default function ContactPage() {
 
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl text-gray-900 mb-4">Contact Us</h1>
-          <p className="text-lg text-gray-600">
-            We'd love to hear from you. Get in touch with us!
-          </p>
+          <h1 className="text-4xl text-gray-900 mb-4">{t('contact.title')}</h1>
+          <p className="text-lg text-gray-600">{t('contact.subtitle')}</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
 
           {/* Contact Form */}
           <div className="bg-white rounded-xl shadow-sm p-6 md:p-8">
-            <h2 className="text-2xl text-gray-900 mb-6">Send Message</h2>
+            <h2 className="text-2xl text-gray-900 mb-6">{t('contact.sendMessage')}</h2>
 
             {submitted ? (
               <div className="py-8 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
                   <Send className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="text-xl text-gray-900 mb-2">Message Sent!</h3>
-                <p className="text-gray-600">
-                  Thank you for contacting us. We'll get back to you soon.
-                </p>
+                <h3 className="text-xl text-gray-900 mb-2">{t('contact.messageSent')}</h3>
+                <p className="text-gray-600">{t('contact.thankYou')}</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm text-gray-700 mb-2">Full Name</label>
+                  <label className="block text-sm text-gray-700 mb-2">{t('contact.fullName')}</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -61,7 +59,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm text-gray-700 mb-2">{t('contact.email')}</label>
                   <input
                     type="email"
                     value={formData.email}
@@ -72,7 +70,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-700 mb-2">Subject</label>
+                  <label className="block text-sm text-gray-700 mb-2">{t('contact.subject')}</label>
                   <input
                     type="text"
                     value={formData.subject}
@@ -83,7 +81,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-700 mb-2">Your Message</label>
+                  <label className="block text-sm text-gray-700 mb-2">{t('contact.yourMessage')}</label>
                   <textarea
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -98,7 +96,7 @@ export default function ContactPage() {
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-pink-400 text-white rounded-lg hover:bg-pink-500"
                 >
                   <Send className="w-5 h-5" />
-                  Send Message
+                  {t('contact.send')}
                 </button>
               </form>
             )}
@@ -107,9 +105,8 @@ export default function ContactPage() {
           {/* Contact Info & Map */}
           <div className="space-y-6">
 
-            {/* Contact Information */}
             <div className="bg-white rounded-xl shadow-sm p-6 md:p-8">
-              <h2 className="text-2xl text-gray-900 mb-6">Get In Touch</h2>
+              <h2 className="text-2xl text-gray-900 mb-6">{t('contact.getInTouch')}</h2>
 
               <div className="space-y-6">
 
@@ -118,8 +115,8 @@ export default function ContactPage() {
                     <MapPin className="w-6 h-6 text-pink-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm text-gray-900 mb-1">Address</h3>
-                    <p className="text-gray-600">123 Beauty Street, Phnom Penh, Cambodia</p>
+                    <h3 className="text-sm text-gray-900 mb-1">{t('contact.address')}</h3>
+                    <p className="text-gray-600">{t('contact.addressValue')}</p>
                   </div>
                 </div>
 
@@ -128,7 +125,7 @@ export default function ContactPage() {
                     <Phone className="w-6 h-6 text-pink-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm text-gray-900 mb-1">Phone</h3>
+                    <h3 className="text-sm text-gray-900 mb-1">{t('contact.phone')}</h3>
                     <p className="text-gray-600">+855 12 345 678</p>
                     <p className="text-gray-600">+855 98 765 432</p>
                   </div>
@@ -139,7 +136,7 @@ export default function ContactPage() {
                     <Mail className="w-6 h-6 text-pink-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm text-gray-900 mb-1">Email</h3>
+                    <h3 className="text-sm text-gray-900 mb-1">{t('contact.email')}</h3>
                     <p className="text-gray-600">info@skincare.com</p>
                     <p className="text-gray-600">support@skincare.com</p>
                   </div>
@@ -150,10 +147,10 @@ export default function ContactPage() {
                     <Clock className="w-6 h-6 text-pink-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm text-gray-900 mb-1">Business Hours</h3>
-                    <p className="text-gray-600">Monday - Friday: 9:00 AM - 6:00 PM</p>
-                    <p className="text-gray-600">Saturday: 9:00 AM - 4:00 PM</p>
-                    <p className="text-gray-600">Sunday: Closed</p>
+                    <h3 className="text-sm text-gray-900 mb-1">{t('contact.businessHours')}</h3>
+                    <p className="text-gray-600">{t('contact.hoursWeekday')}</p>
+                    <p className="text-gray-600">{t('contact.hoursSaturday')}</p>
+                    <p className="text-gray-600">{t('contact.hoursSunday')}</p>
                   </div>
                 </div>
 
@@ -163,7 +160,7 @@ export default function ContactPage() {
             {/* Google Map */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               <div className="p-6 border-b">
-                <h2 className="text-2xl text-gray-900">Visit Us</h2>
+                <h2 className="text-2xl text-gray-900">{t('contact.visitUs')}</h2>
               </div>
               <div className="relative h-[400px]">
                 <iframe

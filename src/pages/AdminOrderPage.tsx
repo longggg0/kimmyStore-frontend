@@ -1,78 +1,38 @@
 import React, { useState } from "react";
 import { AdminLayout } from "../components/AdminLayout";
-import { Eye, CheckCircle, XCircle, Download, Search } from "lucide-react";
-
-type Order = {
-  id: number;
-  orderNumber: string;
-  customer: { name: string; email: string } | null;
-  location: string;
-  total: string;
-  status: "completed" | "pending" | "cancelled";
-  orderDate: string;
-};
-
-const ORDERS: Order[] = [
-  {
-    id: 1,
-    orderNumber: "ORD-001",
-    customer: { name: "Alice Johnson", email: "alice@example.com" },
-    location: "New York, USA",
-    total: "1,999.99",
-    status: "completed",
-    orderDate: "2025-01-15T00:00:00Z",
-  },
-  {
-    id: 2,
-    orderNumber: "ORD-002",
-    customer: { name: "Bob Martinez", email: "bob@example.com" },
-    location: "Los Angeles, USA",
-    total: "349.99",
-    status: "pending",
-    orderDate: "2025-02-03T00:00:00Z",
-  },
-  {
-    id: 3,
-    orderNumber: "ORD-003",
-    customer: null,
-    location: "Chicago, USA",
-    total: "999.99",
-    status: "cancelled",
-    orderDate: "2025-03-20T00:00:00Z",
-  },
-  {
-    id: 4,
-    orderNumber: "ORD-004",
-    customer: { name: "Clara Nguyen", email: "clara@example.com" },
-    location: "Houston, USA",
-    total: "2,549.00",
-    status: "completed",
-    orderDate: "2025-04-01T00:00:00Z",
-  },
-];
+import { Eye, CheckCircle, XCircle, Download, Search,  } from "lucide-react";
+import { useOrder } from "@/hook/useOrder";
+import { orderService } from "@/services/order.service";
+import { Badge } from "@/components/ui/badge";
+// import { useOrder } from "@/hooks/useOrder";
+// import { orderService } from "@/services/orderService";
 
 const STATUS_CONFIG = {
-  completed: {
-    icon: CheckCircle,
-    class: "bg-green-50 text-green-600",
-  },
-  pending: {
-    icon: Eye,
-    class: "bg-yellow-50 text-yellow-600",
-  },
-  cancelled: {
-    icon: XCircle,
-    class: "bg-red-50 text-red-500",
-  },
+  completed: { icon: CheckCircle, class: "bg-green-50 text-green-600" },
+  pending:   { icon: Eye,         class: "bg-yellow-50 text-yellow-600" },
+  cancelled: { icon: XCircle,     class: "bg-red-50 text-red-500" },
 };
+
+type StatusKey = keyof typeof STATUS_CONFIG;
 
 export const AdminOrdersPage: React.FC = () => {
   const [search, setSearch] = useState("");
+  const { orders, loading, error } = useOrder();
 
-  const filtered = ORDERS.filter((o) =>
-    o.customer?.name.toLowerCase().includes(search.toLowerCase()) ||
-    o.orderNumber.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleDownload = async (id: number) => {
+    try {
+      await orderService.generateDocx(id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const filtered = orders.filter((o) => {
+    const fullName = `${o.customers.firstName} ${o.customers.lastName}`.toLowerCase();
+    const orderNum = String(o.orderNumber).toLowerCase();
+    const query = search.toLowerCase();
+    return fullName.includes(query) || orderNum.includes(query);
+  });
 
   return (
     <AdminLayout>
@@ -81,9 +41,7 @@ export const AdminOrdersPage: React.FC = () => {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-semibold text-gray-900 mb-1">Orders</h1>
-          <p className="text-sm font-normal text-gray-400">
-            Manage customer orders
-          </p>
+          <p className="text-sm font-normal text-gray-400">Manage customer orders</p>
         </div>
 
         {/* Search */}
@@ -100,109 +58,122 @@ export const AdminOrdersPage: React.FC = () => {
           />
         </div>
 
+        {/* States */}
+        {loading && (
+          <p className="text-sm text-gray-400 text-center py-12">Loading orders...</p>
+        )}
+        {error && (
+          <p className="text-sm text-red-500 text-center py-12">{error}</p>
+        )}
+
         {/* Table */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  {["Order Number", "Customer", "Location", "Total", "Status", "Date", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className="px-6 py-4 text-left text-xs font-normal text-gray-400 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-12 text-sm font-normal text-gray-400">
-                      No orders found
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((order, index) => {
-                    const status = STATUS_CONFIG[order.status];
-                    const StatusIcon = status.icon;
-
-                    return (
-                      <tr
-                        key={order.id}
-                        className={`hover:bg-gray-50 transition-colors duration-150 ${
-                          index !== filtered.length - 1 ? "border-b border-gray-100" : ""
-                        }`}
+        {!loading && !error && (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    {["Order Number", "Customer", "Location", "Total", "Items", "Discount", "Date", "Actions"].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-4 text-left text-xs font-normal text-gray-400 uppercase tracking-wider"
                       >
-                        {/* Order Number */}
-                        <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-normal rounded-lg">
-                            {order.orderNumber}
-                          </span>
-                        </td>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
 
-                        {/* Customer */}
-                        <td className="px-6 py-4">
-                          {order.customer ? (
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-12 text-sm font-normal text-gray-400">
+                        No orders found
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((order, index) => {
+                      const statusKey: StatusKey = "pending";
+                      const status = STATUS_CONFIG[statusKey];
+                      const StatusIcon = status.icon;
+
+                      const totalItems = order.orderDetails.reduce(
+                        (sum, d) => sum + d.qty, 0
+                      );
+
+                      return (
+                        <tr
+                          key={order.id}
+                          className={`hover:bg-gray-50 transition-colors duration-150 ${
+                            index !== filtered.length - 1 ? "border-b border-gray-100" : ""
+                          }`}
+                        >
+                          {/* Order Number */}
+                          <td className="px-6 py-4">
+                            <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-normal rounded-lg">
+                              ORD-{String(order.orderNumber).padStart(3, "0")}
+                            </span>
+                          </td>
+
+                          {/* Customer */}
+                          <td className="px-6 py-4">
                             <div>
                               <p className="text-sm font-semibold text-gray-800">
-                                {order.customer.name}
+                                {order.customers.firstName} {order.customers.lastName}
+                                
                               </p>
                               <p className="text-xs font-normal text-gray-400 mt-0.5">
-                                {order.customer.email}
+                                
+                                {order.customers.email}
                               </p>
                             </div>
-                          ) : (
-                            <span className="text-sm font-normal text-gray-400">
-                              No customer
-                            </span>
-                          )}
-                        </td>
+                          </td>
 
-                        {/* Location */}
-                        <td className="px-6 py-4 text-sm font-normal text-gray-500">
-                          {order.location}
-                        </td>
+                          {/* Location */}
+                          <td className="px-6 py-4 text-sm font-normal text-gray-500 capitalize">
+                            <Badge className="bg-red-50 text-red-500">{order.location}</Badge>
+                          </td>
 
-                        {/* Total */}
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-800">
-                          ${order.total}
-                        </td>
+                          {/* Total */}
+                          <td className="px-6 py-4 text-sm font-semibold text-gray-800">
+                            <Badge className="bg-green-50 text-green-500">${Number(order.total).toLocaleString()}</Badge>
+                          </td>
 
-                        {/* Status */}
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded-lg capitalize ${status.class}`}>
-                            <StatusIcon className="h-3.5 w-3.5" />
-                            {order.status}
-                          </span>
-                        </td>
+                          {/* Items */}
+                          <td className="px-6 py-4 text-sm font-normal text-gray-500">
+                            <Badge className="bg-blue-50 text-blue-500">{totalItems} {totalItems === 1 ? "item" : "items"}</Badge>
+                          </td>
 
-                        {/* Date */}
-                        <td className="px-6 py-4 text-sm font-normal text-gray-500">
-                          {new Date(order.orderDate).toLocaleDateString()}
-                        </td>
+                          {/* Discount */}
+                          <td className="px-6 py-4 text-sm font-normal text-gray-500">
+                            <Badge className="bg-red-50 text-red-500">{order.discount}%</Badge>
+                          </td>
 
-                        {/* Actions */}
-                        <td className="px-6 py-4">
-                          <button
-                            disabled
-                            className="p-2 rounded-lg border border-gray-200 text-gray-400
-                              cursor-not-allowed hover:border-blue-200 hover:text-blue-400
-                              transition-colors duration-150"
-                          >
-                            <Download className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                          {/* Date */}
+                          <td className="px-6 py-4 text-sm font-normal text-gray-500">
+                            {new Date(order.orderDate).toLocaleDateString()}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleDownload(order.id)}
+                              className="p-2 rounded-lg border border-gray-200 text-black-400
+                                hover:border-blue-200 hover:text-blue-400
+                                transition-colors duration-150"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
     </AdminLayout>

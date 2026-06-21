@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, X } from "lucide-react";
+import type { Category } from "@/types/Category";
+import { useUpdateCategory } from "@/hook/useCategories";
 
-interface Category {
-  id?: number;
-  name: string;
-}
 
 interface UpdateCategoryDialogProps {
   category: Category;
-  onUpdate?: (id: number, name: string) => void;
 }
 
-export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({
-  category, onUpdate,
-}) => {
+export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({ category }) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(category.name);
+
+  const { mutate: updateCategory, isPending } = useUpdateCategory();
 
   useEffect(() => {
     if (open) setName(category.name);
@@ -23,8 +20,11 @@ export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onUpdate?.(category.id!, name.trim());
-    setOpen(false);
+
+    updateCategory(
+      { id: category.id, name: name.trim() },
+      { onSuccess: () => setOpen(false) }
+    );
   };
 
   return (
@@ -44,7 +44,8 @@ export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({
 
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-900">Update Category</h2>
-              <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
+              <button onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -67,12 +68,13 @@ export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({
                   rounded-xl hover:bg-gray-50 transition-colors duration-150">
                 Cancel
               </button>
-              <button onClick={handleSubmit} disabled={!name.trim()}
+              <button onClick={handleSubmit} disabled={!name.trim() || isPending}
                 className="px-5 py-2.5 text-sm font-normal text-white bg-gray-900 rounded-xl
                   hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150">
-                Update Category
+                {isPending ? "Updating..." : "Update Category"}
               </button>
             </div>
+
           </div>
         </div>
       )}

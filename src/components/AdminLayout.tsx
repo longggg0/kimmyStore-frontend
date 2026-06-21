@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, ShoppingCart, LogOut, ChartBarStacked } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, LogOut, ChartBarStacked,  PackageSearch } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
 interface AdminLayoutProps {
@@ -12,6 +12,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { id: 'products',  label: 'Products',   icon: Package,          to: '/admin-product' },
     { id: 'category',  label: 'Categories', icon: ChartBarStacked,  to: '/admin-category' },
     { id: 'orders',    label: 'Orders',     icon: ShoppingCart,     to: '/admin-order' },
+    { id: 'brands',    label: 'Brands',     icon: PackageSearch,     to: '/admin-brands' },
+    {id: 'promotion', label: 'Promotion', icon: Package, to:'/admin-promotion'}
   ];
 
   const navigate = useNavigate();
@@ -30,7 +32,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Logo */}
         <div className="px-6 py-7 border-b border-gray-100">
           <a href="/">
-            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">TechStore</h1>
+            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Kimmy Store</h1>
           </a>
           <p className="text-xs font-normal text-gray-400 mt-1">Admin Panel</p>
         </div>
@@ -62,7 +64,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Footer */}
         <div className="px-4 py-5 border-t border-gray-100 space-y-2">
           <div className="px-4 py-3 bg-gray-50 rounded-xl">
-            <p className="text-sm font-semibold text-gray-800">Admin TechStore</p>
+            <p className="text-sm font-semibold text-gray-800">Admin KimmyStore</p>
             <p className="text-xs font-normal text-gray-400 mt-0.5">admin@gmail.com</p>
           </div>
           <button
