@@ -7,6 +7,9 @@ import { useDiscountMap } from '@/hook/usePromotion';
 import { orderService } from '@/services/order.service';
 import { useAuth } from '@/Context/AuthContext';
 import type { CreateOrderPayload } from '@/types/order';
+import { createPayment } from '@/services/payment.service';
+
+declare const AbaPayway: { checkout: () => void } | undefined;
 
 export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('delivery');
@@ -60,9 +63,39 @@ export default function CheckoutPage() {
         })),
       };
 
-      await orderService.create(payload);
-      clearCart();
-      navigate('/order-history');
+      const res = await orderService.create(payload);
+      const orderId = res.data.id;
+
+      if (paymentMethod === 'bank-transfer') {
+        const paymentRes = await createPayment(orderId);
+
+        if (paymentRes.data) {
+          const payway = paymentRes.data.payway;
+
+          const form = document.getElementById('aba_merchant_request') as HTMLFormElement;
+          if (!form) return;
+
+          // clear old inputs
+          form.innerHTML = '';
+          form.method = payway.method;
+          form.action = payway.action;
+          form.target = payway.target;
+
+          // populate fields
+          Object.entries(payway.fields).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = String(value);
+            form.appendChild(input);
+          });
+
+          AbaPayway?.checkout();
+        }
+      } else {
+        clearCart();
+        navigate('/order-history');
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to place order.');
     } finally {

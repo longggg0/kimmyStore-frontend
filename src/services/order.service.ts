@@ -1,6 +1,6 @@
 // import type { OrderResponse, CreateOrderPayload } from "@/types/Order";
 
-import type { OrderResponse, CreateOrderPayload  } from "@/types/order";
+import type { OrderResponse, CreateOrderPayload } from "@/types/order";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -17,13 +17,23 @@ export const orderService = {
     return response.json();
   },
 
-  create: async (payload: CreateOrderPayload): Promise<void> => {
+  // create: async (payload: CreateOrderPayload): Promise<void> => {
+  //   const response = await fetch(`${BASE_URL}/api/v2/order`, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(payload),
+  //   });
+  //   if (!response.ok) throw new Error(`Failed to create order: ${response.statusText}`);
+  // },
+
+  create: async (payload: CreateOrderPayload): Promise<{ data: { id: number } }> => {
     const response = await fetch(`${BASE_URL}/api/v2/order`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!response.ok) throw new Error(`Failed to create order: ${response.statusText}`);
+    return response.json();
   },
 
   update: async (id: number, payload: Partial<CreateOrderPayload>): Promise<void> => {
