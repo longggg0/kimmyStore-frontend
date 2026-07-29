@@ -97,6 +97,7 @@ export interface GetProductsParams {
   limit?: number;
   search?: string;
   categoryId?: number;
+  skinType?: string;
 }
 
 export const getProductsPaginated = async (
@@ -107,6 +108,7 @@ export const getProductsPaginated = async (
   query.set("page", String(params?.page ?? 1));
   if (params?.search) query.set("search", params.search);
   if (params?.categoryId) query.set("categoryId", String(params.categoryId));
+  if (params?.skinType && params.skinType !== "all") query.set("skinType", params.skinType);
 
   const response = await fetch(`${BASE_URL}?${query.toString()}`);
   await checkResponse(response, "getProductsPaginated");

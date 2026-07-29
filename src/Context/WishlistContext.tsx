@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { Product } from '@/types/Product';
+import { useAuth } from './AuthContext';
 
 interface WishlistContextValue {
   items: Product[];
@@ -13,11 +14,13 @@ interface WishlistContextValue {
 
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
-const WISHLIST_KEY = 'kimmy_wishlist';
+function getWishlistKey(userId: string | number | undefined) {
+  return userId ? `kimmy_wishlist_${userId}` : 'kimmy_wishlist_guest';
+}
 
-function loadWishlist(): Product[] {
+function loadWishlist(key: string): Product[] {
   try {
-    const raw = localStorage.getItem(WISHLIST_KEY);
+    const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -25,11 +28,18 @@ function loadWishlist(): Product[] {
 }
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<Product[]>(loadWishlist);
+  const { user } = useAuth();
+  const wishlistKey = getWishlistKey(user?.id);
+
+  const [items, setItems] = useState<Product[]>(() => loadWishlist(wishlistKey));
 
   useEffect(() => {
-    localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
-  }, [items]);
+    setItems(loadWishlist(wishlistKey));
+  }, [wishlistKey]);
+
+  useEffect(() => {
+    localStorage.setItem(wishlistKey, JSON.stringify(items));
+  }, [items, wishlistKey]);
 
   const addToWishlist = useCallback((product: Product) => {
     setItems((prev) => {

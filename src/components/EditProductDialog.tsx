@@ -27,11 +27,11 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
     skinType: product.skinType || "",
     description: product.description || "",
   });
-
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: update, isPending } = useUpdateProduct();
-  const { mutateAsync: uploadImage, isPending: isUploading } = useUploadProductImage();
-  const { mutateAsync: updateImage, isPending: isUpdatingImage } = useUpdateProductImage();
+  const { mutate: uploadImage } = useUploadProductImage();
+  const { mutate: updateImage } = useUpdateProductImage();
 
   useEffect(() => {
     if (open) {
@@ -88,16 +88,21 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
         },
       },
       {
-        onSuccess: async () => {
-          if (imageFile) {
-            if (hasExistingImage) {
-              await updateImage({ id: product.id, file: imageFile });
-            } else {
-              await uploadImage({ id: product.id, file: imageFile });
-            }
-            onImageUpdated(product.id); // bust cache immediately — no refresh needed
-          }
+        onSuccess: () => {
+          // Close immediately — text fields are already patched into the
+          // table optimistically. Image upload (if any) runs in the
+          // background so we're not stuck waiting on Cloudinary.
           handleClose();
+
+          if (imageFile) {
+            const mutateImage = hasExistingImage ? updateImage : uploadImage;
+            mutateImage(
+              { id: product.id, file: imageFile },
+              {
+                onSuccess: () => onImageUpdated(product.id), // bust image cache once the real upload lands
+              }
+            );
+          }
         },
       }
     );
@@ -107,7 +112,6 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
     outline-none focus:border-gray-300 transition-colors text-gray-900 placeholder:text-gray-400`;
 
   const currentImageUrl = `http://localhost:3000/api/v3/product/images/${product.id}/download?t=${new Date(product.updatedAt).getTime()}`;
-  const isProcessing = isPending || isUploading || isUpdatingImage;
 
   return (
     <>
@@ -218,9 +222,9 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
                 className="px-5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
                 Cancel
               </button>
-              <button onClick={handleSubmit} disabled={isProcessing}
+              <button onClick={handleSubmit} disabled={isPending}
                 className="px-5 py-2.5 text-sm text-white bg-gray-900 rounded-xl hover:bg-gray-700 disabled:opacity-50">
-                {isPending ? "Saving..." : isUploading || isUpdatingImage ? "Uploading image..." : "Update Product"}
+                {isPending ? "Saving..." : "Update Product"}
               </button>
             </div>
           </div>

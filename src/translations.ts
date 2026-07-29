@@ -150,6 +150,26 @@ export const translations = {
     'order.contactSupport': 'Contact Support',
     // 'cart.subtotal': 'Subtotal',
 'cart.discount': 'Discount',
+'footer.brand': 'Kimmy Skincare',
+
+'footer.home': 'Home',
+'footer.about': 'About Us',
+'footer.services': 'Services',
+'footer.policies': 'Policies',
+'footer.faq': 'FAQs',
+
+'footer.customerService': 'Customer Service',
+'footer.contactSupport': 'Contact Support',
+'footer.shippingInfo': 'Shipping Info',
+'footer.returnPolicy': 'Return Policy',
+
+'footer.contactUs': 'Contact Us',
+
+'footer.address': 'St. 271, Toul Kork, Phnom Penh, Cambodia',
+
+'footer.country': 'Cambodia 🇰🇭',
+
+'footer.copyright': 'Copyright © 2024 Kimmy Skincare. All Rights Reserved.',
   },
   
   km: {
@@ -302,6 +322,26 @@ export const translations = {
     'order.total': 'សរុប',
     'order.downloadInvoice': 'ទាញយកវិក្កយបត្រ',
     'order.contactSupport': 'ទំនាក់ទំនងផ្នែកជំនួយ',
+    'footer.brand': 'គីមមី ស្គីនឃែរ',
+
+'footer.home': 'ទំព័រដើម',
+'footer.about': 'អំពីយើង',
+'footer.services': 'សេវាកម្ម',
+'footer.policies': 'គោលការណ៍',
+'footer.faq': 'សំណួរញឹកញាប់',
+
+'footer.customerService': 'សេវាកម្មអតិថិជន',
+'footer.contactSupport': 'ទាក់ទងផ្នែកជំនួយ',
+'footer.shippingInfo': 'ព័ត៌មានការដឹកជញ្ជូន',
+'footer.returnPolicy': 'គោលការណ៍ត្រឡប់ទំនិញ',
+
+'footer.contactUs': 'ទាក់ទងមកយើង',
+
+'footer.address': 'ផ្លូវលេខ ២៧១ សង្កាត់ទួលគោក រាជធានីភ្នំពេញ ប្រទេសកម្ពុជា',
+
+'footer.country': 'កម្ពុជា 🇰🇭',
+
+'footer.copyright': 'រក្សាសិទ្ធិ © ២០២៤ Kimmy Skincare។ រក្សាសិទ្ធិគ្រប់យ៉ាង។',
   },
 } as const;
 

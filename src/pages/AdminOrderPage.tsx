@@ -111,7 +111,7 @@ export const AdminOrdersPage: React.FC = () => {
                           {/* Order Number */}
                           <td className="px-6 py-4">
                             <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-normal rounded-lg">
-                              ORD-{String(order.orderNumber).padStart(3, "0")}
+                              ORD-{String(order.id).padStart(3, "0")}
                             </span>
                           </td>
 

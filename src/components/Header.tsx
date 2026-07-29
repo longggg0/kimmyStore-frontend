@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ShoppingCart, Heart, User, LayoutDashboard, LogOut, ClipboardList } from 'lucide-react';
+import { ShoppingCart, Heart, User, LayoutDashboard, LogOut, ClipboardList, Menu, X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import AuthModal from '@/pages/AuthModal';
 import { useAuth } from '@/hook/useAuth';
@@ -10,6 +10,7 @@ import { useLanguage } from '../Context/LanguageContext';
 export function Header() {
   const [showAuth, setShowAuth] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user, logout } = useAuth();
   const { totalItems } = useCart();
@@ -35,15 +36,15 @@ export function Header() {
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
 
             {/* Logo */}
             <div className="flex items-center">
               <img
                 src="/logoJabHouy.png"
                 alt="Kimmy Skincare Logo"
-                className="w-12 h-12 object-contain"
+                className="w-9 h-9 sm:w-12 sm:h-12 object-contain"
               />
             </div>
 
@@ -158,10 +159,10 @@ export function Header() {
             </div>
 
             {/* Mobile Actions */}
-            <div className="md:hidden flex items-center gap-3">
+            <div className="md:hidden flex items-center gap-2">
               <NavLink to="/cart-page">
-                <div className="relative p-2 text-gray-600">
-                  <ShoppingCart className="w-6 h-6" />
+                <div className="relative p-1.5 sm:p-2 text-gray-600">
+                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                   {totalItems > 0 && (
                     <span className="absolute -top-1 -right-1 bg-pink-400 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
                       {totalItems > 99 ? '99+' : totalItems}
@@ -169,97 +170,108 @@ export function Header() {
                   )}
                 </div>
               </NavLink>
-              <div className="p-2 text-gray-600">☰</div>
+              <button
+                onClick={() => setMobileMenuOpen(prev => !prev)}
+                aria-label="Toggle menu"
+                aria-expanded={mobileMenuOpen}
+                className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-900"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
 
           {/* Mobile Menu */}
-          <div className="md:hidden py-4 border-t">
-            <nav className="flex flex-col gap-4">
-              <NavLink to='/' end className={mobileNavClass}>{t('nav.home')}</NavLink>
-              <NavLink to='/productPage' className={mobileNavClass}>{t('nav.products')}</NavLink>
-              <NavLink to='/contact' className={mobileNavClass}>{t('nav.contact')}</NavLink>
+          {mobileMenuOpen && (
+            <div className="md:hidden py-3 sm:py-4 border-t">
+              <nav className="flex flex-col gap-2 sm:gap-4">
+                <NavLink to='/' end className={mobileNavClass} onClick={() => setMobileMenuOpen(false)}>{t('nav.home')}</NavLink>
+                <NavLink to='/productPage' className={mobileNavClass} onClick={() => setMobileMenuOpen(false)}>{t('nav.products')}</NavLink>
+                <NavLink to='/contact' className={mobileNavClass} onClick={() => setMobileMenuOpen(false)}>{t('nav.contact')}</NavLink>
 
-              <div className="text-left px-4 py-2 text-gray-600 flex items-center gap-2">
-                <Heart className="w-5 h-5" />
-                {t('mobile.wishlist')} ({wishlistCount})
-              </div>
+                <NavLink to="/wishlist" className="text-left px-4 py-2 text-gray-600 flex items-center gap-2 text-sm sm:text-base" onClick={() => setMobileMenuOpen(false)}>
+                  <Heart className="w-5 h-5 shrink-0" />
+                  {t('mobile.wishlist')} ({wishlistCount})
+                </NavLink>
 
-              <NavLink to="/cart-page" className="text-left px-4 py-2 text-gray-600 flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5" />
-                {t('mobile.cart')} ({totalItems})
-              </NavLink>
+                <NavLink to="/cart-page" className="text-left px-4 py-2 text-gray-600 flex items-center gap-2 text-sm sm:text-base" onClick={() => setMobileMenuOpen(false)}>
+                  <ShoppingCart className="w-5 h-5 shrink-0" />
+                  {t('mobile.cart')} ({totalItems})
+                </NavLink>
 
-              <div className="px-4 py-2 border-t">
-                <button
-                  onClick={toggle}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
-                >
-                  {language === 'en' ? (
-                    <>
-                      <img src="https://flagcdn.com/w20/kh.png" alt="Khmer flag" className="w-5 h-4 object-cover rounded-sm" />
-                      <span className="text-sm">ខ្មែរ</span>
-                    </>
-                  ) : (
-                    <>
-                      <img src="https://flagcdn.com/w20/gb.png" alt="English flag" className="w-5 h-4 object-cover rounded-sm" />
-                      <span className="text-sm">EN</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="px-4 py-2 border-t">
-                {isAuthenticated ? (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-3 px-2 py-1">
-                      <div className="w-9 h-9 bg-pink-400 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                        {user?.username?.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{user?.username}</p>
-                        <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
-                      </div>
-                    </div>
-
-                    {user?.role === 'admin' && (
-                      <NavLink
-                        to="/admin-dashboard"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-pink-500 bg-pink-50 rounded-lg"
-                      >
-                        <LayoutDashboard className="w-4 h-4" />
-                        {t('btn.dashboard')}
-                      </NavLink>
-                    )}
-
-                    <NavLink
-                      to="/order-history"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
-                    >
-                      <ClipboardList className="w-4 h-4" />
-                      {t('order.title')}
-                    </NavLink>
-
-                    <button
-                      onClick={logout}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      {t('btn.logout')}
-                    </button>
-                  </div>
-                ) : (
+                <div className="px-4 py-2 border-t">
                   <button
-                    onClick={() => setShowAuth(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-pink-400 text-white rounded-lg"
+                    onClick={toggle}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
                   >
-                    <User className="w-4 h-4" />
-                    {t('btn.login')}
+                    {language === 'en' ? (
+                      <>
+                        <img src="https://flagcdn.com/w20/kh.png" alt="Khmer flag" className="w-5 h-4 object-cover rounded-sm" />
+                        <span className="text-sm">ខ្មែរ</span>
+                      </>
+                    ) : (
+                      <>
+                        <img src="https://flagcdn.com/w20/gb.png" alt="English flag" className="w-5 h-4 object-cover rounded-sm" />
+                        <span className="text-sm">EN</span>
+                      </>
+                    )}
                   </button>
-                )}
-              </div>
-            </nav>
-          </div>
+                </div>
+
+                <div className="px-4 py-2 border-t">
+                  {isAuthenticated ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-3 px-2 py-1">
+                        <div className="w-9 h-9 bg-pink-400 rounded-full flex items-center justify-center text-white font-medium text-sm shrink-0">
+                          {user?.username?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">{user?.username}</p>
+                          <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+                        </div>
+                      </div>
+
+                      {user?.role === 'admin' && (
+                        <NavLink
+                          to="/admin-dashboard"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-pink-500 bg-pink-50 rounded-lg"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          {t('btn.dashboard')}
+                        </NavLink>
+                      )}
+
+                      <NavLink
+                        to="/order-history"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <ClipboardList className="w-4 h-4" />
+                        {t('order.title')}
+                      </NavLink>
+
+                      <button
+                        onClick={() => { logout(); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        {t('btn.logout')}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setShowAuth(true); setMobileMenuOpen(false); }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-pink-400 text-white rounded-lg"
+                    >
+                      <User className="w-4 h-4" />
+                      {t('btn.login')}
+                    </button>
+                  )}
+                </div>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 

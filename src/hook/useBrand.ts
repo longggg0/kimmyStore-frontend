@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { brandService } from "@/services/brand.service";
 
 export const BRAND_QUERY_KEY = ["brands"];
@@ -17,6 +18,12 @@ export const useCreateBrand = () => {
       brandService.create(name, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BRAND_QUERY_KEY });
+      toast.success("Brand created successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to create brand", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };
@@ -28,6 +35,12 @@ export const useUpdateBrand = () => {
       brandService.update(id, name, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BRAND_QUERY_KEY });
+      toast.success("Brand updated successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to update brand", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };
@@ -38,6 +51,12 @@ export const useDeleteBrand = () => {
     mutationFn: (id: number) => brandService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BRAND_QUERY_KEY });
+      toast.success("Brand deleted successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to delete brand", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };

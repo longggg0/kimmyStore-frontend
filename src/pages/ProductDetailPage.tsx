@@ -67,10 +67,10 @@ export default function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-6 w-16 bg-gray-200 rounded mb-6 animate-pulse" />
-          <div className="grid md:grid-cols-2 gap-8 bg-white rounded-2xl p-10">
+          <div className="h-6 w-16 bg-gray-200 rounded mb-4 sm:mb-6 animate-pulse" />
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 bg-white rounded-2xl p-4 sm:p-10">
             <div className="aspect-[3/4] bg-gray-200 rounded-2xl animate-pulse" />
             <div className="space-y-4 animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-1/4" />
@@ -87,7 +87,7 @@ export default function ProductDetailPage() {
 
   if (isError || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-red-400">{t('detail.notFound')}</p>
         <button
           onClick={() => navigate('/productPage')}
@@ -108,34 +108,34 @@ export default function ProductDetailPage() {
     : originalPrice;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 sm:mb-6 text-sm sm:text-base"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           {t('detail.back')}
         </button>
 
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-2xl shadow-sm p-6 md:p-10 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 bg-white rounded-2xl shadow-sm p-4 sm:p-6 md:p-10 max-w-5xl mx-auto">
 
           <div className="relative">
             <div className="relative overflow-hidden rounded-2xl bg-gray-100">
               <img
                 src={IMAGE_URL(product.id)}
                 alt={product.name}
-                className="w-full h-[450px] md:h-[550px] object-cover"
+                className="w-full h-[300px] sm:h-[450px] md:h-[550px] object-cover"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               {!product.isActive && (
-                <div className="absolute top-4 left-4 bg-gray-400 text-white px-4 py-1.5 rounded-full text-sm">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-gray-400 text-white px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm">
                   {t('detail.inactive')}
                 </div>
               )}
               {hasDiscount && (
-                <div className="absolute top-4 right-4 bg-[#ff6b9d] text-white px-4 py-1.5 rounded-full text-sm">
+                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-[#ff6b9d] text-white px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm">
                   -{discountPercent}%
                 </div>
               )}
@@ -148,27 +148,27 @@ export default function ProductDetailPage() {
               {product.category?.name}
             </div>
 
-            <h1 className="text-3xl lg:text-4xl mb-4 leading-tight" style={{ color: '#333333' }}>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4 leading-tight" style={{ color: '#333333' }}>
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-5 sm:mb-6">
               <div className="flex items-center gap-1">
                 {[1,2,3,4].map((s) => (
-                  <Star key={s} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <Star key={s} className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
                 ))}
-                <Star className="w-5 h-5 text-gray-300" />
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
               </div>
-              <span className="text-sm text-gray-600">
+              <span className="text-xs sm:text-sm text-gray-600">
                 4.0 <span className="text-gray-400">(128 {t('detail.reviews')})</span>
               </span>
             </div>
 
-            <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-gray-100">
-              <span className="text-4xl text-black">${discountedPrice.toFixed(2)}</span>
+            <div className="flex items-baseline gap-3 mb-5 sm:mb-6 pb-5 sm:pb-6 border-b border-gray-100">
+              <span className="text-3xl sm:text-4xl text-black">${discountedPrice.toFixed(2)}</span>
               {hasDiscount && (
                 <>
-                  <span className="text-xl text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
+                  <span className="text-lg sm:text-xl text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
                   {/* <span className="text-sm bg-pink-50 text-pink-600 px-2.5 py-1 rounded-full">
                     -{discountPercent}%
                   </span> */}
@@ -178,12 +178,12 @@ export default function ProductDetailPage() {
 
             <div className="mb-5">
               {product.qty > 0 ? (
-                <span className="inline-flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1.5 rounded-full text-sm">
+                <span className="inline-flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1.5 rounded-full text-xs sm:text-sm">
                   <Check className="w-4 h-4" />
                   {t('detail.inStock')} ({product.qty} left)
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-2 text-red-500 bg-red-50 px-3 py-1.5 rounded-full text-sm">
+                <span className="inline-flex items-center gap-2 text-red-500 bg-red-50 px-3 py-1.5 rounded-full text-xs sm:text-sm">
                   {t('detail.outOfStock')}
                 </span>
               )}
@@ -191,30 +191,30 @@ export default function ProductDetailPage() {
 
             <div className="mb-5">
               <h3 className="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">{t('detail.size')}</h3>
-              <div className="text-gray-900 text-base">{product.size}</div>
+              <div className="text-gray-900 text-sm sm:text-base">{product.size}</div>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.suitableFor')}</h3>
-              <span className="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-sm border border-pink-100 capitalize">
-                {product.skinType}
-              </span>
-            </div>
+           <div className="mb-6">
+  <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.suitableFor')}</h3>
+  <span className="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-xs sm:text-sm border border-pink-100 capitalize">
+    {product.skinType}
+  </span>
+</div>
 
             <div className="mb-6">
               <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.quantity')}</h3>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-11 h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                  className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
                 >
                   -
                 </button>
-                <span className="text-lg w-12 text-center">{quantity}</span>
+                <span className="text-base sm:text-lg w-12 text-center">{quantity}</span>
                 <button
                   onClick={() => setQuantity(Math.min(product.qty, quantity + 1))}
                   disabled={product.qty === 0}
-                  className="w-11 h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -225,57 +225,59 @@ export default function ProductDetailPage() {
               <button
                 onClick={handleAddToCart}
                 disabled={product.qty === 0}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-full transition-all duration-300 bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-full transition-all duration-300 bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base
                   ${added ? 'bg-pink-500 text-white' : 'bg-[#ff6b9d] text-white hover:bg-[#e5588a]'}`}
               >
                 {added ? (
                   <>
-                    <Check className="w-5 h-5" />
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                     {t('detail.added')}
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-5 h-5" />
+                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
                     {t('detail.addToCart')}
                   </>
                 )}
               </button>
 
-              <button
-                onClick={() => toggleWishlist(product)}
-                className={`sm:w-auto px-6 py-3.5 border-2 rounded-full flex items-center justify-center gap-2 transition-all ${
-                  wishlisted
-                    ? 'bg-pink-500 border-pink-500 text-white'
-                    : 'border-gray-200 text-gray-600 hover:border-pink-400 hover:text-pink-400'
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} />
-              </button>
-
-              <div className="relative">
+              <div className="flex gap-3">
                 <button
-                  onClick={() => setShowShareMenu(!showShareMenu)}
-                  className="w-full sm:w-auto px-6 py-3.5 border-2 border-gray-200 rounded-full hover:border-gray-300 flex items-center justify-center transition-colors"
+                  onClick={() => toggleWishlist(product)}
+                  className={`flex-1 sm:flex-none sm:w-auto px-6 py-3 sm:py-3.5 border-2 rounded-full flex items-center justify-center gap-2 transition-all ${
+                    wishlisted
+                      ? 'bg-pink-500 border-pink-500 text-white'
+                      : 'border-gray-200 text-gray-600 hover:border-pink-400 hover:text-pink-400'
+                  }`}
                 >
-                  <Share2 className="w-5 h-5" />
+                  <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${wishlisted ? 'fill-current' : ''}`} />
                 </button>
 
-                {showShareMenu && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowShareMenu(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20">
-                      <button onClick={() => handleShare('facebook')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareFacebook')}</button>
-                      <button onClick={() => handleShare('twitter')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareTwitter')}</button>
-                      <button onClick={() => handleShare('whatsapp')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareWhatsApp')}</button>
-                      <button onClick={() => handleShare('telegram')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareTelegram')}</button>
-                      <div className="border-t border-gray-100 my-1" />
-                      <button onClick={() => handleShare('copy')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm flex items-center justify-between">
-                        <span>{t('detail.copyLink')}</span>
-                        {copied && <Check className="w-4 h-4 text-green-500" />}
-                      </button>
-                    </div>
-                  </>
-                )}
+                <div className="relative flex-1 sm:flex-none">
+                  <button
+                    onClick={() => setShowShareMenu(!showShareMenu)}
+                    className="w-full sm:w-auto px-6 py-3 sm:py-3.5 border-2 border-gray-200 rounded-full hover:border-gray-300 flex items-center justify-center transition-colors"
+                  >
+                    <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+
+                  {showShareMenu && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowShareMenu(false)} />
+                      <div className="absolute right-0 top-full mt-2 w-52 sm:w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20">
+                        <button onClick={() => handleShare('facebook')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareFacebook')}</button>
+                        <button onClick={() => handleShare('twitter')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareTwitter')}</button>
+                        <button onClick={() => handleShare('whatsapp')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareWhatsApp')}</button>
+                        <button onClick={() => handleShare('telegram')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm">{t('detail.shareTelegram')}</button>
+                        <div className="border-t border-gray-100 my-1" />
+                        <button onClick={() => handleShare('copy')} className="w-full px-4 py-2.5 text-left hover:bg-gray-50 text-sm flex items-center justify-between">
+                          <span>{t('detail.copyLink')}</span>
+                          {copied && <Check className="w-4 h-4 text-green-500" />}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 

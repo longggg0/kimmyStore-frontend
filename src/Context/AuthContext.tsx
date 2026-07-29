@@ -1,17 +1,44 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom'; // 👈 add this
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { AuthUser, LoginPayload, RegisterPayload } from '@/types/Auth';
 import { authService } from '../services/auth.service';
 
 const TOKEN_KEY = 'auth_token';
 
+function base64UrlDecode(str: string): string {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+  return atob(padded);
+}
+
 function decodeToken(token: string): AuthUser | null {
   try {
     const payload = token.split('.')[1];
-    return JSON.parse(atob(payload)) as AuthUser;
+    return JSON.parse(base64UrlDecode(payload)) as AuthUser;
   } catch {
     return null;
   }
+}
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(base64UrlDecode(payload));
+    if (!decoded.exp) return false;
+    return Date.now() >= decoded.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
+function getValidStoredToken(): string | null {
+  const stored = localStorage.getItem(TOKEN_KEY);
+  if (!stored) return null;
+  if (isTokenExpired(stored)) {
+    localStorage.removeItem(TOKEN_KEY);
+    return null;
+  }
+  return stored;
 }
 
 interface AuthContextValue {
@@ -29,12 +56,33 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(() => getValidStoredToken());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate(); // 👈 add this
+  const navigate = useNavigate();
 
   const user: AuthUser | null = token ? decodeToken(token) : null;
+
+  const logout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
+    navigate('/');
+  };
+
+  useEffect(() => {
+    if (!token) return;
+
+    const check = () => {
+      if (isTokenExpired(token)) {
+        logout();
+      }
+    };
+
+    check();
+    const interval = setInterval(check, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [token]);
 
   const login = async (payload: LoginPayload): Promise<boolean> => {
     setLoading(true);
@@ -44,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(TOKEN_KEY, res.data);
       setToken(res.data);
 
-      // 👇 decode role and redirect
       const decoded = decodeToken(res.data);
       if (decoded?.role === 'admin') {
         navigate('/admin-dashboard');
@@ -69,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await authService.login({ email: payload.email, password: payload.password });
       localStorage.setItem(TOKEN_KEY, res.data);
       setToken(res.data);
-      navigate('/'); // 👈 after register always go home
+      navigate('/');
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Register failed');
@@ -77,12 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    setToken(null);
-    navigate('/'); // 👈 after logout go home
   };
 
   return (

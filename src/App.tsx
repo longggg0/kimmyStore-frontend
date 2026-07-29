@@ -16,10 +16,13 @@ import { AdminOrdersPage } from "./pages/AdminOrderPage";
 import { AdminBrandsPage } from "./pages/AdminBrandsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminPromotionPage } from "./pages/AdminPromotionPage";
+import { Toaster } from "sonner";
+import ScrollToTop from "./utils/ScrollToTop";
 
 export default function App() {
   return (
     <div>
+      <Toaster richColors position="top-right" />
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
@@ -27,7 +30,14 @@ export default function App() {
           <Route path="/productDetailPage/:id" element={<ProductDetailPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/cart-page" element={<CartPage />} />
-          <Route path="/checkout-page" element={<CheckoutPage />} />
+          <Route
+            path="/checkout-page"
+            element={
+              <ProtectedRoute>
+                <CheckoutPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/order-history" element={<OrderHistoryPage />} />
         </Route>

@@ -104,61 +104,61 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 sm:mb-6 text-sm sm:text-base"
         >
           <ArrowLeft className="w-5 h-5" />
           {t('detail.back')}
         </button>
 
-        <h1 className="text-3xl text-gray-900 mb-8">{t('checkout.title')}</h1>
+        <h1 className="text-2xl sm:text-3xl text-gray-900 mb-6 sm:mb-8">{t('checkout.title')}</h1>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-gray-100">
-              <h2 className="text-xl text-gray-900 mb-6">{t('checkout.shippingInfo')}</h2>
-              <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100">
+              <h2 className="text-lg sm:text-xl text-gray-900 mb-4 sm:mb-6">{t('checkout.shippingInfo')}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">{t('checkout.fullName')}</label>
                   <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
+                    className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">{t('checkout.email')}</label>
                   <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
+                    className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">{t('checkout.phone')}</label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
+                    className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm text-gray-700 mb-2">{t('checkout.address')}</label>
                   <input type="text" value={address} onChange={(e) => setAddress(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
+                    className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 border border-gray-100">
-              <h2 className="text-xl text-gray-900 mb-6">{t('checkout.paymentMethod')}</h2>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100">
+              <h2 className="text-lg sm:text-xl text-gray-900 mb-4 sm:mb-6">{t('checkout.paymentMethod')}</h2>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-400 transition-all duration-300">
-                  <input type="radio" name="payment" value="delivery" checked={paymentMethod === 'delivery'}
-                    onChange={(e) => setPaymentMethod(e.target.value)} className="text-pink-400 focus:ring-pink-400" />
-                  <DollarSign className="w-6 h-6 text-gray-600" />
-                  <span className="flex-1">{t('checkout.cashOnDelivery')}</span>
-                </label>
-                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-400 transition-all duration-300">
+                  {/* <label className="flex items-center gap-3 p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-400 transition-all duration-300">
+                    <input type="radio" name="payment" value="delivery" checked={paymentMethod === 'delivery'}
+                      onChange={(e) => setPaymentMethod(e.target.value)} className="text-pink-400 focus:ring-pink-400 flex-shrink-0" />
+                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 flex-shrink-0" />
+                    <span className="flex-1 text-sm sm:text-base">{t('checkout.cashOnDelivery')}</span>
+                  </label> */}
+                <label className="flex items-center gap-3 p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-400 transition-all duration-300">
                   <input type="radio" name="payment" value="bank-transfer" checked={paymentMethod === 'bank-transfer'}
-                    onChange={(e) => setPaymentMethod(e.target.value)} className="text-pink-400 focus:ring-pink-400" />
-                  <Building2 className="w-6 h-6 text-gray-600" />
-                  <span className="flex-1">{t('checkout.bankTransfer')}</span>
+                    onChange={(e) => setPaymentMethod(e.target.value)} className="text-pink-400 focus:ring-pink-400 flex-shrink-0" />
+                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 flex-shrink-0" />
+                  <span className="flex-1 text-sm sm:text-base">{t('checkout.bankTransfer')}</span>
                 </label>
               </div>
               <div className="mt-6 p-4 bg-pink-50 rounded-xl flex items-start gap-3">
@@ -177,8 +177,8 @@ export default function CheckoutPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 sticky top-24 border border-gray-100">
-              <h2 className="text-xl text-gray-900 mb-6">{t('checkout.orderSummary')}</h2>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 lg:sticky lg:top-24 border border-gray-100">
+              <h2 className="text-lg sm:text-xl text-gray-900 mb-4 sm:mb-6">{t('checkout.orderSummary')}</h2>
               <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                 {items.map((item) => {
                   const discount = discountMap.get(item.product.id);
@@ -190,7 +190,7 @@ export default function CheckoutPage() {
                     <div key={item.product.id} className="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
                       <div className="overflow-hidden rounded-lg flex-shrink-0">
                         <img src={`http://localhost:3000/api/v3/product/images/${item.product.id}/download`}
-                          alt={item.product.name} className="w-16 h-16 object-cover"
+                          alt={item.product.name} className="w-14 h-14 sm:w-16 sm:h-16 object-cover"
                           onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -205,33 +205,33 @@ export default function CheckoutPage() {
                 })}
               </div>
               <div className="space-y-3 border-t border-gray-100 pt-4">
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-sm sm:text-base text-gray-600">
                   <span>{t('OriginalPrice')}</span>
                   <span>${originalSubtotal.toFixed(2)}</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-pink-500">
+                  <div className="flex justify-between text-sm sm:text-base text-pink-500">
                     <span>{t('Discount')}</span>
                     <span>-{discountAmount.toFixed(2)}$</span>
                   </div>
                 )}
-                <div className="flex justify-between text-gray-900">
+                <div className="flex justify-between text-sm sm:text-base text-gray-900">
                   <span>{t('DiscountedPrice')}</span>
                   <span className="font-medium">${discountedSubtotal.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-gray-100 pt-3">
-                  <div className="flex justify-between text-black">
-                    <span>{t('checkout.total')}</span>
-                    <span className="text-xl">${discountedSubtotal.toFixed(2)}</span>
+                  <div className="flex justify-between items-center text-black">
+                    <span className="text-sm sm:text-base">{t('checkout.total')}</span>
+                    <span className="text-lg sm:text-xl">${discountedSubtotal.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
               <button onClick={handlePlaceOrder} disabled={isSubmitting}
-                className="w-full mt-6 px-6 py-3 bg-pink-400 text-white rounded-lg hover:bg-pink-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                className="w-full mt-6 px-6 py-3 bg-pink-400 text-white rounded-lg hover:bg-pink-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base">
                 {isSubmitting ? 'Placing order...' : t('checkout.placeOrder')}
               </button>
               <button onClick={() => navigate('/cart-page')}
-                className="w-full mt-3 px-6 py-3 border-2 border-[#ff6b9d] text-[#ff6b9d] rounded-lg hover:bg-pink-50 transition-colors">
+                className="w-full mt-3 px-6 py-3 border-2 border-[#ff6b9d] text-[#ff6b9d] rounded-lg hover:bg-pink-50 transition-colors text-sm sm:text-base">
                 {t('checkout.cancel')}
               </button>
             </div>

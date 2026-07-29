@@ -5,6 +5,7 @@ import { useOrder } from '@/hook/useOrder';
 import { orderService } from '@/services/order.service';
 import { useAuth } from '@/Context/AuthContext';
 import type { Order } from '@/types/order';
+import { Link } from 'react-router-dom';
 
 function StatusBadge({ status }: { status?: string }) {
   switch (status?.toLowerCase()) {
@@ -48,23 +49,23 @@ function OrderCard({ order }: { order: Order }) {
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-50 to-purple-50 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <div>
-            <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.number')}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mb-1.5 sm:mb-2 uppercase tracking-wider">{t('order.number')}</p>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-900">#{order.orderNumber}</p>
+              <p className="text-xs sm:text-sm text-gray-900">#{order.id}</p>
               <button onClick={handleCopy} className="p-1 rounded-lg">
                 {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-gray-400" />}
               </button>
             </div>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.date')}</p>
-            <p className="text-sm text-gray-900">{new Date(order.orderDate).toLocaleDateString()}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mb-1.5 sm:mb-2 uppercase tracking-wider">{t('order.date')}</p>
+            <p className="text-xs sm:text-sm text-gray-900">{new Date(order.orderDate).toLocaleDateString()}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.status')}</p>
-            <StatusBadge />
+            {/* <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.status')}</p>
+            <StatusBadge /> */}
           </div>
         </div>
       </div>
@@ -72,9 +73,9 @@ function OrderCard({ order }: { order: Order }) {
       {/* Body */}
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Items */}
-        <div className="mb-8">
-          <h3 className="text-sm text-gray-700 mb-4 uppercase tracking-wider">{t('order.items')}</h3>
-          <div className="space-y-4">
+        <div className="mb-6 sm:mb-8">
+          <h3 className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4 uppercase tracking-wider">{t('order.items')}</h3>
+          <div className="space-y-3 sm:space-y-4">
             {order.orderDetails.map((detail) => (
               <div key={detail.id} className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-gray-50 to-pink-50/30 border border-gray-100">
                 <div className="flex-1 min-w-0">
@@ -90,7 +91,7 @@ function OrderCard({ order }: { order: Order }) {
         </div>
 
         {/* Info + Payment */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
           {/* Customer Info */}
           <div className="bg-gradient-to-br from-pink-50/80 to-purple-50/80 rounded-2xl p-4 sm:p-6 lg:p-8 border border-pink-200/50 flex flex-col">
             <div className="flex items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-pink-200/50">
@@ -104,23 +105,23 @@ function OrderCard({ order }: { order: Order }) {
                 </div> */}
               <div className="bg-white/80 rounded-xl p-3 sm:p-4">
                 <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.phone')}</p>
-                <div className="flex items-center gap-2 text-sm text-gray-900">
-                  <Phone className="w-4 h-4 text-[#ff6b9d]" />
-                  <p>{customer.phone}</p>
+                <div className="flex items-center gap-2 text-sm text-gray-900 min-w-0">
+                  <Phone className="w-4 h-4 text-[#ff6b9d] flex-shrink-0" />
+                  <p className="break-words">{customer.phone}</p>
                 </div>
               </div>
               <div className="bg-white/80 rounded-xl p-3 sm:p-4">
                 <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.emailAddress')}</p>
-                <div className="flex items-center gap-2 text-sm text-gray-900">
-                  <Mail className="w-4 h-4 text-[#ff6b9d]" />
-                  <p>{customer.email}</p>
+                <div className="flex items-center gap-2 text-sm text-gray-900 min-w-0">
+                  <Mail className="w-4 h-4 text-[#ff6b9d] flex-shrink-0" />
+                  <p className="break-all">{customer.email}</p>
                 </div>
               </div>
               <div className="bg-white/80 rounded-xl p-3 sm:p-4">
                 <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.deliveryAddress')}</p>
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 min-w-0">
                   <MapPin className="w-4 h-4 text-[#ff6b9d] mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-gray-900">{order.location}</p>
+                  <p className="text-sm text-gray-900 break-words">{order.location}</p>
                 </div>
               </div>
             </div>
@@ -164,9 +165,11 @@ function OrderCard({ order }: { order: Order }) {
         </div>
 
         <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-100">
+          <Link to="/contact" className="w-full sm:w-auto">
           <button className="w-full sm:w-auto px-6 py-3 bg-[#ff6b9d] text-white rounded-full text-sm flex items-center justify-center gap-2 shadow-lg shadow-pink-200/50">
             <Phone className="w-4 h-4 sm:w-5 sm:h-5" /> {t('order.contactSupport')}
           </button>
+          </Link>
         </div>
       </div>
     </div>
@@ -181,33 +184,33 @@ export default function OrderHistoryPage() {
   const myOrders = orders.filter((order) => order.customerId === user?.id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl text-gray-900 mb-2">{t('order.title')}</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl lg:text-4xl text-gray-900 mb-2">{t('order.title')}</h1>
           <p className="text-sm sm:text-base text-gray-500">{t('order.welcome')}</p>
         </div>
 
         {loading && (
-          <div className="flex justify-center py-20">
+          <div className="flex justify-center py-16 sm:py-20">
             <div className="w-8 h-8 border-4 border-pink-300 border-t-pink-500 rounded-full animate-spin" />
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 flex items-center justify-between">
-            <span>{error}</span>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <span className="text-sm">{error}</span>
             <button onClick={refetch} className="text-sm underline">Retry</button>
           </div>
         )}
 
         {!loading && !error && myOrders.length === 0 && (
-          <div className="text-center py-20 text-gray-400">
-            <p className="text-lg">No orders yet.</p>
+          <div className="text-center py-16 sm:py-20 text-gray-400">
+            <p className="text-base sm:text-lg">No orders yet.</p>
           </div>
         )}
 
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {myOrders.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}

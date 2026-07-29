@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
 import { useProductsPaginated } from '@/hook/useProduct';
 import ProductCard from '@/components/ProductCard';
 import { useLanguage } from '../Context/LanguageContext';
 import { useCategory } from '@/hook/useCategories';
+import { useCheckTransaction } from '@/hook/usePayment';
+import { useCart } from '@/Context/CartContext';
 
 export default function ProductsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSkinType, setSelectedSkinType] = useState('all');
@@ -13,10 +17,12 @@ export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [categoryExpanded, setCategoryExpanded] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const { clearCart } = useCart();
   const limit = 8;
 
   const { t } = useLanguage();
   const { data: categoryData } = useCategory();
+  const { mutate: checkTransactionMutate } = useCheckTransaction();
 
   const apiCategories = (categoryData ?? []).filter((c) => c.isActive);
   const categories = ['all', ...apiCategories.map((c) => c.name)];
@@ -30,25 +36,45 @@ export default function ProductsPage() {
     limit,
     search: searchQuery || undefined,
     categoryId: selectedCategoryId,
+    skinType: selectedSkinType,
   });
 
   const products = data?.data ?? [];
   const pagination = data?.pagination;
   const totalPages = pagination ? Math.ceil(pagination.total / limit) : 1;
 
-  // Skin type + sort applied client-side on the current page only
-  const filtered = products
-    .filter((p) => selectedSkinType === 'all' || p.skinType.toLowerCase() === selectedSkinType.toLowerCase())
-    .sort((a, b) => {
-      if (sortBy === 'price-asc') return parseFloat(a.price) - parseFloat(b.price);
-      if (sortBy === 'price-desc') return parseFloat(b.price) - parseFloat(a.price);
-      if (sortBy === 'newest') return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-      return 0;
-    });
+  // Skin type is now filtered server-side. Sort is still applied client-side
+  // to the current page only, since the API doesn't support sorting yet.
+  const sorted = [...products].sort((a, b) => {
+    if (sortBy === 'price-asc') return parseFloat(a.price) - parseFloat(b.price);
+    if (sortBy === 'price-desc') return parseFloat(b.price) - parseFloat(a.price);
+    if (sortBy === 'newest') return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    return 0;
+  });
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory, selectedSkinType, sortBy]);
+
+  // Catch tranId from ABA's return_url and check the transaction status
+  useEffect(() => {
+    const tranId = searchParams.get('tranId');
+    if (tranId) {
+      checkTransactionMutate(tranId, {
+        onSuccess: (data) => {
+          const status = data?.data?.payment?.status as string;
+          if (status === 'PAID') {
+            clearCart();
+          }
+          setSearchParams({});
+        },
+      });
+    }
+  }, [searchParams]);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.min(Math.max(1, page), totalPages));
+  };
 
   const FilterPanel = () => (
     <div className="p-6">
@@ -154,7 +180,7 @@ export default function ProductsPage() {
 
             {/* Mobile filter button */}
             <div className="lg:hidden mb-4 flex items-center justify-between">
-              <p className="text-sm text-gray-600">{filtered.length} {t('products.found')}</p>
+              <p className="text-sm text-gray-600">{sorted.length} {t('products.found')}</p>
               <button
                 onClick={() => setShowFilters(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-pink-400 text-white rounded-lg hover:bg-pink-500 transition-colors"
@@ -204,55 +230,55 @@ export default function ProductsPage() {
             )}
 
             {/* Empty */}
-            {!isLoading && !isError && data && filtered.length === 0 && (
+            {!isLoading && !isError && data && sorted.length === 0 && (
               <div className="text-center py-20">
                 <p className="text-gray-400 text-sm">{t('products.empty')}</p>
               </div>
             )}
 
             {/* Product grid */}
-            {!isError && data && filtered.length > 0 && (
-              <>
-                <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 transition-opacity duration-200 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
-                  {filtered.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+            {!isError && data && sorted.length > 0 && (
+              <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 transition-opacity duration-200 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
+                {sorted.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
 
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-8">
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={!pagination?.previousPage}
-                      className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Prev
-                    </button>
+            {/* Pagination — driven by server-side totalPages, which now
+                correctly accounts for the skinType filter too. */}
+            {!isError && data && totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Prev
+                </button>
 
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-9 h-9 rounded-lg text-sm transition-colors ${
-                          currentPage === page
-                            ? 'bg-pink-400 text-white'
-                            : 'border border-gray-300 text-gray-700 hover:border-pink-400 hover:text-pink-400'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`w-9 h-9 rounded-lg text-sm transition-colors ${
+                      currentPage === page
+                        ? 'bg-pink-400 text-white'
+                        : 'border border-gray-300 text-gray-700 hover:border-pink-400 hover:text-pink-400'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
 
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={!pagination?.nextPages}
-                      className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
             )}
 
           </div>

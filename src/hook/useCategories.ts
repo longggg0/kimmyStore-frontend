@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "../services/category.service";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Category } from "@/types/Category";
+import { toast } from "sonner";
 
 
 export const useCategory = () => {
@@ -13,6 +14,7 @@ export const useCategory = () => {
     },
   });
 };
+
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
 
@@ -21,6 +23,12 @@ export const useCreateCategory = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category created successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to create category", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };
@@ -34,6 +42,12 @@ export const useUpdateCategory = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category updated successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to update category", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };
@@ -46,6 +60,12 @@ export const useDeleteCategory = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category deleted successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to delete category", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };

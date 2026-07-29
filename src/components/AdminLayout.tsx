@@ -1,6 +1,8 @@
 import React from 'react';
 import { LayoutDashboard, Package, ShoppingCart, LogOut, ChartBarStacked,  PackageSearch } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '@/Context/AuthContext';
+// import { useAuth } from '@/context/AuthContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -16,12 +18,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     {id: 'promotion', label: 'Promotion', icon: Package, to:'/admin-promotion'}
   ];
 
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("admin");
-    navigate("/login-page", { replace: true });
-  };
+  const { logout } = useAuth();
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -68,7 +65,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             <p className="text-xs font-normal text-gray-400 mt-0.5">admin@gmail.com</p>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl
               text-red-400 hover:text-red-500 hover:bg-red-50
               transition-all duration-200"

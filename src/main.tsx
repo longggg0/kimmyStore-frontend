@@ -9,6 +9,7 @@ import { AuthProvider } from "./Context/AuthContext.tsx"
 import { CartProvider } from "./Context/CartContext.tsx"
 import { WishlistProvider } from "./Context/WishlistContext.tsx"
 import { LanguageProvider } from "./Context/LanguageContext.tsx"
+import ScrollToTop from "./utils/ScrollToTop.tsx"
 
 const queryClient = new QueryClient()
 
@@ -17,7 +18,8 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
-          <AuthProvider>
+        <ScrollToTop />
+          <AuthProvider>  
             <LanguageProvider>
             <CartProvider>
               <WishlistProvider>

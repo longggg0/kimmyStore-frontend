@@ -48,3 +48,27 @@ export interface CreatePaymentResponse {
     payway: PaywayData;
   };
 }
+export interface AbaCheckTransactionStatus {
+  code: string;       // e.g. "00"
+  message?: string;
+}
+
+export interface AbaCheckTransactionData {
+  payment_status_code: number;
+  payment_status: "APPROVED" | "DECLINED" | "FAILED" | string;
+  transaction_date?: string;
+  [key: string]: unknown;
+}
+
+export interface AbaCheckTransactionResponse {
+  status: AbaCheckTransactionStatus;
+  data: AbaCheckTransactionData;
+}
+
+export interface CheckTransactionResponse {
+  message: string;
+  data: {
+    payment: PaymentRecord;
+    aba: AbaCheckTransactionResponse;
+  };
+}

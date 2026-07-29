@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { useCreateProduct, useUploadProductImage } from "@/hook/useProduct";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AddProductDialogProps {
   categories: { id: number; name: string }[];
@@ -21,9 +22,9 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
   const { mutate: createProduct, isPending } = useCreateProduct();
-  // ✅ Use the mutation hook instead of calling the service directly
-  const { mutateAsync: uploadImage, isPending: isUploading } = useUploadProductImage();
+  const { mutate: uploadImage } = useUploadProductImage();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -58,18 +59,40 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
         isActive: true,
       },
       {
-        onSuccess: async (response) => {
-          const newProductId = response?.data?.id;
+        onSuccess: (response) => {
+  const newProduct = response?.data;
+  const newProductId = newProduct?.id;
 
-          // ✅ Upload image BEFORE closing/resetting, using the mutation hook
-          // which will invalidate ["products"] after upload completes
-          if (imageFile && newProductId) {
-            await uploadImage({ id: newProductId, file: imageFile });
-          }
+  const matchedCategory = categories.find((c) => c.id === Number(form.categoryId));
 
-          // ✅ Close dialog only after everything is done
-          handleCancel();
-        },
+  queryClient.setQueriesData(
+    { predicate: (query) => query.queryKey[0] === "products" || query.queryKey[0] === "products-paginated" },
+    (old: any) => {
+      if (!old?.data) return old;
+      return {
+        ...old,
+        data: [
+          ...old.data,
+          {
+            ...newProduct,
+            category: matchedCategory ? { id: matchedCategory.id, name: matchedCategory.name } : null,
+            imagePreview, // local blob URL for instant display
+          },
+        ],
+      };
+    }
+  );
+
+  handleCancel();
+
+  if (imageFile && newProductId) {
+    uploadImage({ id: newProductId, file: imageFile });
+  } else {
+    queryClient.invalidateQueries({
+      predicate: (query) => query.queryKey[0] === "products" || query.queryKey[0] === "products-paginated",
+    });
+  }
+},
       }
     );
   };
@@ -99,7 +122,6 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
 
             <div className="px-6 py-5 space-y-4">
 
-              {/* Image Upload */}
               <div className="space-y-1.5">
                 <label className="text-sm text-gray-600">Product Image</label>
                 <div
@@ -190,10 +212,9 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
                 className="px-5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
                 Cancel
               </button>
-              {/* ✅ Disable button during both create AND upload */}
-              <button onClick={handleSubmit} disabled={isPending || isUploading}
+              <button onClick={handleSubmit} disabled={isPending}
                 className="px-5 py-2.5 text-sm text-white bg-gray-900 rounded-xl hover:bg-gray-700 disabled:opacity-50">
-                {isPending ? "Saving..." : isUploading ? "Uploading image..." : "Save Product"}
+                {isPending ? "Saving..." : "Save Product"}
               </button>
             </div>
           </div>

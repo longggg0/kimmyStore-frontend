@@ -5,6 +5,7 @@ import {
   useQueryClient,
   type UseQueryOptions,
 } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   createPromotion,
   deletePromotion,
@@ -68,6 +69,12 @@ export const useCreatePromotion = () => {
     mutationFn: (body: PromotionBody) => createPromotion(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROMOTION_KEYS.all });
+      toast.success("Promotion created successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to create promotion", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };
@@ -82,6 +89,12 @@ export const useUpdatePromotion = () => {
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: PROMOTION_KEYS.all });
       queryClient.invalidateQueries({ queryKey: PROMOTION_KEYS.detail(id) });
+      toast.success("Promotion updated successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to update promotion", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };
@@ -94,6 +107,12 @@ export const useDeletePromotion = () => {
     mutationFn: (id: number) => deletePromotion(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROMOTION_KEYS.all });
+      toast.success("Promotion deleted successfully.");
+    },
+    onError: (err) => {
+      toast.error("Failed to delete promotion", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     },
   });
 };

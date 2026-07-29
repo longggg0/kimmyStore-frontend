@@ -6,6 +6,11 @@ import { useDeleteProduct, useProducts } from "@/hook/useProduct";
 // import { useCategory } from "@/hook/useCategory";
 import { EditProductDialog } from "@/components/EditProductDialog";
 import { useCategory } from "@/hook/useCategories";
+import type { Product } from "@/types/Product";
+
+// Client-only field added for optimistic UI: shows the locally picked image
+// instantly, before the real uploaded image URL is available from the server.
+type ProductWithPreview = Product & { imagePreview?: string };
 
 export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -14,9 +19,9 @@ export const AdminProductsPage: React.FC = () => {
 
   const { data, isLoading, isError } = useProducts();
   const { data: categories = [] } = useCategory();
-  const { mutate: deleteProduct } = useDeleteProduct();
+  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
-  const products = data?.data ?? [];
+  const products = (data?.data ?? []) as ProductWithPreview[];
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -98,7 +103,11 @@ export const AdminProductsPage: React.FC = () => {
                         <td className="px-6 py-4">
                           <img
                             key={t}
-                            src={`http://localhost:3000/api/v3/product/images/${product.id}/download?t=${t}`}
+                            src={
+                              product.imagePreview
+                                ? product.imagePreview
+                                : `http://localhost:3000/api/v3/product/images/${product.id}/download?t=${t}`
+                            }
                             alt={product.name}
                             className="w-10 h-10 rounded-lg object-cover border border-gray-100"
                             onError={(e) => { e.currentTarget.style.display = "none"; }}
@@ -166,15 +175,17 @@ export const AdminProductsPage: React.FC = () => {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setConfirmId(null)}
-                className="px-5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50"
+                disabled={isDeleting}
+                className="px-5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="px-5 py-2.5 text-sm text-white bg-red-500 rounded-xl hover:bg-red-600"
+                disabled={isDeleting}
+                className="px-5 py-2.5 text-sm text-white bg-red-500 rounded-xl hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Delete
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
