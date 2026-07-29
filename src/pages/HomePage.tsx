@@ -1,4 +1,4 @@
-import { Clock, TrendingUp } from 'lucide-react';
+import {  TrendingUp } from 'lucide-react';
 import { useGetBrands } from '@/hook/useBrand';
 import { useTopSellingProducts } from '@/hook/useTopSellingProduct';
 import { useNewArrivalProducts } from '@/hook/useNewArrivalProducts';

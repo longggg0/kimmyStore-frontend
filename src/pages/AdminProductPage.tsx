@@ -106,7 +106,7 @@ export const AdminProductsPage: React.FC = () => {
                             src={
                               product.imagePreview
                                 ? product.imagePreview
-                                : `http://localhost:3000/api/v3/product/images/${product.id}/download?t=${t}`
+                                : `https://kimmystore-backend.onrender.com/api/v3/product/images/${product.id}/download?t=${t}`
                             }
                             alt={product.name}
                             className="w-10 h-10 rounded-lg object-cover border border-gray-100"

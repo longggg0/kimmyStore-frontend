@@ -1,6 +1,6 @@
 import type { CheckTransactionResponse, CreatePaymentResponse } from "@/types/payment";
 
-const BASE_URL = "http://localhost:3000/api/v1"; // e.g. 
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v1`; // e.g. 
 
 export const createPayment = async (
   orderId: number

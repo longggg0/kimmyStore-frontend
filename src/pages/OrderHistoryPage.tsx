@@ -1,4 +1,4 @@
-import { Truck, CheckCircle, Copy, MapPin, Download, Phone, Mail, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import {  Copy, MapPin, Download, Phone, Mail, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLanguage } from '../Context/LanguageContext';
 import { useOrder } from '@/hook/useOrder';
@@ -7,18 +7,7 @@ import { useAuth } from '@/Context/AuthContext';
 import type { Order } from '@/types/order';
 import { Link } from 'react-router-dom';
 
-function StatusBadge({ status }: { status?: string }) {
-  switch (status?.toLowerCase()) {
-    case 'shipped':
-      return <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border bg-blue-50 text-blue-700 border-blue-200"><Truck className="w-4 h-4" /> Shipped</span>;
-    case 'delivered':
-      return <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border bg-emerald-50 text-emerald-700 border-emerald-200"><CheckCircle className="w-4 h-4" /> Delivered</span>;
-    case 'cancelled':
-      return <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border bg-red-50 text-red-700 border-red-200"><XCircle className="w-4 h-4" /> Cancelled</span>;
-    default:
-      return <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="w-4 h-4" /> Pending</span>;
-  }
-}
+
 
 function OrderCard({ order }: { order: Order }) {
   const [copied, setCopied] = useState(false);
@@ -26,7 +15,6 @@ function OrderCard({ order }: { order: Order }) {
   const { t } = useLanguage();
 
   const customer = order.customers;
-  const fullName = `${customer.firstName} ${customer.lastName}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(String(order.orderNumber));

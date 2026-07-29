@@ -89,7 +89,7 @@ export default function CartPage() {
                   <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 md:p-6">
                     <div className="relative overflow-hidden rounded-xl flex-shrink-0">
                       <img
-                        src={`http://localhost:3000/api/v3/product/images/${item.product.id}/download`}
+                        src={`https://kimmystore-backend.onrender.com/api/v3/product/images/${item.product.id}/download`}
                         alt={item.product.name}
                         className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 object-cover"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}

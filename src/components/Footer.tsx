@@ -1,6 +1,5 @@
 import { MapPin, Mail, Phone, Flag } from "lucide-react";
 import { Link } from "react-router-dom";
-// import { useTranslation } from "@/context/TranslationContext";
 import { useLanguage } from "@/Context/LanguageContext";
 
 export function Footer() {
@@ -127,7 +126,7 @@ export function Footer() {
               </li>
 
               <li className="flex items-center gap-2 text-gray-600 text-sm sm:text-[15px] justify-center sm:justify-start">
-                <Phone className="w-4 h-4 flex-shrink-0 text-[#ff6b9d]" />
+                <Phone className="w-4 h-4 shrink-0 text-[#ff6b9d]" />
                 <a
                   href="tel:+85595380005"
                   className="hover:text-[#ff6b9d] transition-colors"
@@ -137,7 +136,7 @@ export function Footer() {
               </li>
 
               <li className="flex items-center gap-2 text-gray-600 text-sm sm:text-[15px] justify-center sm:justify-start">
-                <Flag className="w-4 h-4 flex-shrink-0 text-[#ff6b9d]" />
+                <Flag className="w-4 h-4 shrink-0 text-[#ff6b9d]" />
                 <span>{t("footer.country")}</span>
               </li>
 

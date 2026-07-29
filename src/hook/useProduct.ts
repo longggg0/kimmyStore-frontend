@@ -99,7 +99,6 @@ export const useDeleteProduct = () => {
 };
 
 export const useCreateProduct = () => {
-  const queryClient = useQueryClient();
 
   // Still no cache invalidation here on purpose — if an image is attached,
   // useUploadProductImage's onSuccess invalidates once that finishes. If there's

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, DollarSign, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Building2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/Context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../Context/LanguageContext';
@@ -189,7 +189,7 @@ export default function CheckoutPage() {
                   return (
                     <div key={item.product.id} className="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
                       <div className="overflow-hidden rounded-lg flex-shrink-0">
-                        <img src={`http://localhost:3000/api/v3/product/images/${item.product.id}/download`}
+                        <img src={`https://kimmystore-backend.onrender.com/api/v3/product/images/${item.product.id}/download`}
                           alt={item.product.name} className="w-14 h-14 sm:w-16 sm:h-16 object-cover"
                           onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                       </div>

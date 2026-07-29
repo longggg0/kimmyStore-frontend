@@ -57,7 +57,7 @@ export default function WishlistPage() {
             <div key={product.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 flex flex-col">
               <div className="relative overflow-hidden aspect-[3/4]">
                 <img
-                  src={`http://localhost:3000/api/v3/product/images/${product.id}/download`}
+                  src={`https://kimmystore-backend.onrender.com/api/v3/product/images/${product.id}/download`}
                   alt={product.name}
                   className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}

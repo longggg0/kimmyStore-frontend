@@ -5,7 +5,7 @@ import type {
   SinglePromotionResponse,
 } from "@/types/Promotion";
 
-const BASE_URL = "http://localhost:3000/api/v3/promotion";
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v3/promotion`;
 
 const checkResponse = async (response: Response, label: string): Promise<void> => {
   if (!response.ok) {

@@ -6,7 +6,7 @@ import type {
   CustomersResponse,
 } from "@/types/Auth";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+const BASE_URL = import.meta.env.VITE_API_URL ;
 
 export const authService = {
   login: async (payload: LoginPayload): Promise<LoginResponse> => {

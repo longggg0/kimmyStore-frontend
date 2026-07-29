@@ -17,7 +17,6 @@ import { AdminBrandsPage } from "./pages/AdminBrandsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminPromotionPage } from "./pages/AdminPromotionPage";
 import { Toaster } from "sonner";
-import ScrollToTop from "./utils/ScrollToTop";
 
 export default function App() {
   return (

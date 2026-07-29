@@ -15,20 +15,6 @@ import type { Promotion } from "@/types/Promotion";
 
 const today = () => new Date().toISOString().split("T")[0];
 
-const toDateInputValue = (isoOrFormatted: string) => {
-  // Backend returns formatted strings like "Friday, June 19, 2026 at 12:00 AM"
-  // Try to parse and convert to YYYY-MM-DD for statusOf comparison
-  const d = new Date(isoOrFormatted);
-  if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
-  return isoOrFormatted;
-};
-
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
 const statusOf = (promo: Promotion) => {
   const now = new Date();

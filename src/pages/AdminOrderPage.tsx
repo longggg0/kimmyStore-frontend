@@ -1,20 +1,9 @@
 import React, { useState } from "react";
 import { AdminLayout } from "../components/AdminLayout";
-import { Eye, CheckCircle, XCircle, Download, Search,  } from "lucide-react";
+import { Download, Search,  } from "lucide-react";
 import { useOrder } from "@/hook/useOrder";
 import { orderService } from "@/services/order.service";
 import { Badge } from "@/components/ui/badge";
-// import { useOrder } from "@/hooks/useOrder";
-// import { orderService } from "@/services/orderService";
-
-const STATUS_CONFIG = {
-  completed: { icon: CheckCircle, class: "bg-green-50 text-green-600" },
-  pending:   { icon: Eye,         class: "bg-yellow-50 text-yellow-600" },
-  cancelled: { icon: XCircle,     class: "bg-red-50 text-red-500" },
-};
-
-type StatusKey = keyof typeof STATUS_CONFIG;
-
 export const AdminOrdersPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const { orders, loading, error } = useOrder();
@@ -93,10 +82,6 @@ export const AdminOrdersPage: React.FC = () => {
                     </tr>
                   ) : (
                     filtered.map((order, index) => {
-                      const statusKey: StatusKey = "pending";
-                      const status = STATUS_CONFIG[statusKey];
-                      const StatusIcon = status.icon;
-
                       const totalItems = order.orderDetails.reduce(
                         (sum, d) => sum + d.qty, 0
                       );
