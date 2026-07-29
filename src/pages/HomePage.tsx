@@ -39,14 +39,14 @@ export default function HomePage() {
               
             </div>
             <div>
-              {topSellingProducts[0] && (
-                <img
-                  src="/public/skincareHero.jpg"
-                  alt="Hero"
-                  className="rounded-2xl shadow-2xl w-full h-[260px] sm:h-[320px] md:h-[400px] object-cover"
-                />
-              )}
-            </div>
+  {topSellingProducts?.length > 0 && (
+    <img
+      src="/skincareHero.jpg"
+      alt="Hero"
+      className="rounded-2xl shadow-2xl w-full h-[260px] sm:h-[320px] md:h-[400px] object-cover"
+    />
+  )}
+</div>
           </div>
         </div>
       </section>
