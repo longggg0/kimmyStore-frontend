@@ -82,13 +82,54 @@ export default function CheckoutPage() {
           form.target = payway.target;
 
           // populate fields
-          Object.entries(payway.fields).forEach(([key, value]) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = String(value);
-            form.appendChild(input);
-          });
+          // populate fields
+Object.entries(payway.fields).forEach(([key, value]) => {
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = key;
+  input.value = String(value);
+  form.appendChild(input);
+});
+
+// Save order information for Telegram
+const telegramOrder = {
+  customer: {
+    fullName,
+    email,
+    phone,
+    address,
+  },
+
+  products: items.map((item) => {
+    const discount = discountMap.get(item.product.id);
+    const discountPercent = discount?.discountPercent ?? 0;
+
+    const originalPrice = Number(item.product.price);
+
+    const finalPrice =
+      discountPercent > 0
+        ? originalPrice * (1 - discountPercent / 100)
+        : originalPrice;
+
+    return {
+      name: item.product.name,
+      quantity: item.quantity,
+      price: finalPrice,
+      subtotal: finalPrice * item.quantity,
+    };
+  }),
+
+  originalTotal: originalSubtotal,
+  discount: discountAmount,
+  total: discountedSubtotal,
+};
+
+sessionStorage.setItem(
+  "pendingTelegramOrder",
+  JSON.stringify(telegramOrder)
+);
+
+// AbaPayway?.checkout();
 
           AbaPayway?.checkout();
         }

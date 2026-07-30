@@ -11,19 +11,31 @@ interface UpdateCategoryDialogProps {
 export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({ category }) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(category.name);
+  const [error, setError] = useState("");
 
   const { mutate: updateCategory, isPending } = useUpdateCategory();
 
   useEffect(() => {
-    if (open) setName(category.name);
+    if (open) {
+      setName(category.name);
+      setError("");
+    }
   }, [open, category.name]);
 
+  const handleClose = () => {
+    setError("");
+    setOpen(false);
+  };
+
   const handleSubmit = () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setError("Category name is required");
+      return;
+    }
 
     updateCategory(
       { id: category.id, name: name.trim() },
-      { onSuccess: () => setOpen(false) }
+      { onSuccess: () => handleClose() }
     );
   };
 
@@ -44,7 +56,7 @@ export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({ cate
 
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-900">Update Category</h2>
-              <button onClick={() => setOpen(false)}
+              <button type="button" onClick={handleClose}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
                 <X className="h-4 w-4" />
               </button>
@@ -55,20 +67,26 @@ export const UpdateCategoryDialog: React.FC<UpdateCategoryDialogProps> = ({ cate
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (error) setError("");
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="w-full px-4 py-2.5 text-sm font-normal bg-white border border-gray-100 rounded-xl
-                  outline-none focus:border-gray-300 transition-colors text-gray-900"
+                className={`w-full px-4 py-2.5 text-sm font-normal bg-white border rounded-xl
+                  outline-none transition-colors text-gray-900 ${
+                    error ? "border-red-300 focus:border-red-400" : "border-gray-100 focus:border-gray-300"
+                  }`}
               />
+              {error && <p className="text-xs text-red-500">{error}</p>}
             </div>
 
             <div className="flex items-center justify-end gap-3 px-6 py-5 border-t border-gray-100">
-              <button onClick={() => setOpen(false)}
+              <button type="button" onClick={handleClose}
                 className="px-5 py-2.5 text-sm font-normal text-gray-600 bg-white border border-gray-200
                   rounded-xl hover:bg-gray-50 transition-colors duration-150">
                 Cancel
               </button>
-              <button onClick={handleSubmit} disabled={!name.trim() || isPending}
+              <button type="button" onClick={handleSubmit} disabled={isPending}
                 className="px-5 py-2.5 text-sm font-normal text-white bg-gray-900 rounded-xl
                   hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150">
                 {isPending ? "Updating..." : "Update Category"}

@@ -28,14 +28,14 @@ export function Footer() {
             </Link>
 
             <ul className="space-y-2">
-              <li>
+              {/* <li>
                 <a
                   href="#"
                   className="text-gray-600 hover:text-[#ff6b9d] transition-colors text-sm sm:text-[15px]"
                 >
                   {t("footer.about")}
                 </a>
-              </li>
+              </li> */}
 
               <li>
                 <a
@@ -148,7 +148,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
           <p className="text-center text-gray-500 text-sm sm:text-[15px]">
-            {t("footer.copyright")}
+             Kimmy Skincare. All Rights Reserved.
           </p>
         </div>
 

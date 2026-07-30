@@ -165,7 +165,7 @@ ${formData.message}`;
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm text-gray-900 mb-1">{t('contact.phone')}</h3>
-                    <p className="text-sm sm:text-base text-gray-600">+855 12 345 678</p>
+                    <p className="text-sm sm:text-base text-gray-600">+855 95 380 005</p>
                     <p className="text-sm sm:text-base text-gray-600">+855 98 765 432</p>
                   </div>
                 </div>
@@ -203,7 +203,7 @@ ${formData.message}`;
               </div>
               <div className="relative h-[280px] sm:h-[350px] md:h-[400px]">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3908.7426754950477!2d104.91594931478593!3d11.568271491842797!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x310951e96d257a6f%3A0x6b66703c8bf29fdf!2sPhnom%20Penh%2C%20Cambodia!5e0!3m2!1sen!2s!4v1641234567890!5m2!1sen!2s"
+                  src="https://www.google.com/maps?q=11.5433508,104.8933854&z=17&output=embed"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
@@ -211,6 +211,17 @@ ${formData.message}`;
                   loading="lazy"
                   title="Store Location"
                 />
+              </div>
+              <div className="p-4 sm:p-6 border-t">
+                <a
+                  href="https://www.google.com/maps/place/ChabHuoy+%E1%9E%85%E1%9E%B6%E1%9E%94%E1%9F%8B%E1%9E%A0%E1%9E%BD%E1%9E%99+Skincare/@11.5433508,104.8933854,1380m/data=!3m2!1e3!4b1!4m6!3m5!1s0x310951ce3b601d61:0x7127846830452deb!8m2!3d11.5433508!4d104.8933854!16s%2Fg%2F11s3xnc3t2!18m1!1e1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-pink-500 hover:text-pink-600 text-sm sm:text-base"
+                >
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  {t('contact.getDirections') || 'Get Directions'}
+                </a>
               </div>
             </div>
 

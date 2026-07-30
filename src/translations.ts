@@ -165,7 +165,7 @@ export const translations = {
 
 'footer.contactUs': 'Contact Us',
 
-'footer.address': 'St. 271, Toul Kork, Phnom Penh, Cambodia',
+'footer.address': 'St.271,  Khan MeanChey, Phnom Penh, Cambodia',
 
 'footer.country': 'Cambodia 🇰🇭',
 
@@ -337,7 +337,7 @@ export const translations = {
 
 'footer.contactUs': 'ទាក់ទងមកយើង',
 
-'footer.address': 'ផ្លូវលេខ ២៧១ សង្កាត់ទួលគោក រាជធានីភ្នំពេញ ប្រទេសកម្ពុជា',
+'footer.address': 'ផ្លូវលេខ ២៧១ ខណ្ឌមានជ័យ រាជធានីភ្នំពេញ ប្រទេសកម្ពុជា',
 
 'footer.country': 'កម្ពុជា 🇰🇭',
 

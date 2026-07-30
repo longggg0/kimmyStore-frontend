@@ -2,7 +2,7 @@
 
 import type { OrderResponse, CreateOrderPayload } from "@/types/order";
 
-const BASE_URL = import.meta.env.VITE_API_URL ;
+const BASE_URL = import.meta.env.VITE_API_URL  ;
 
 export const orderService = {
   getAll: async (): Promise<OrderResponse> => {
@@ -32,6 +32,7 @@ export const orderService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    console.log(import.meta.env.VITE_API_URL);
     if (!response.ok) throw new Error(`Failed to create order: ${response.statusText}`);
     return response.json();
   },

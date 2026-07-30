@@ -69,7 +69,7 @@ export const AdminProductsPage: React.FC = () => {
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   {["ID", "Image", "Name", "Category", "Price", "Stock", "Size", "SkinType", "Description", "Actions"].map((h) => (
-                    <th key={h} className="px-6 py-4 text-left text-xs text-gray-400 uppercase tracking-wider">
+                    <th key={h} className="px-6 py-4 text-left text-xs text-gray-400 uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -117,25 +117,25 @@ export const AdminProductsPage: React.FC = () => {
                         <td className="px-6 py-4 text-sm font-semibold text-gray-800">{product.name}</td>
 
                         <td className="px-6 py-4">
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg">
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg whitespace-nowrap">
                             {product.category?.name || "N/A"}
                           </span>
                         </td>
 
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-800">
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap">
                           ${Number(product.price).toLocaleString()}
                         </td>
 
                         <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 text-xs rounded-lg ${
+                          <span className={`inline-block px-2.5 py-1 text-xs rounded-lg whitespace-nowrap ${
                             product.qty > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
                           }`}>
                             {product.qty > 0 ? `${product.qty} units` : "Out of stock"}
                           </span>
                         </td>
 
-                        <td className="px-6 py-4 text-sm text-gray-600">{product.size || "N/A"}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{product.skinType || "N/A"}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{product.size || "N/A"}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{product.skinType || "N/A"}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{product.description || "N/A"}</td>
 
                         <td className="px-6 py-4">

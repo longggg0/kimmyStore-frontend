@@ -22,6 +22,15 @@ export default function ProductsPage() {
 
   const { t } = useLanguage();
   const { data: categoryData } = useCategory();
+//   useEffect(() => {
+//   const tranId = searchParams.get("tranId");
+
+//   console.log("tranId:", tranId);
+
+//   if (tranId) {
+//     checkTransactionMutate(tranId);
+//   }
+// }, [searchParams]);
   const { mutate: checkTransactionMutate } = useCheckTransaction();
 
   const apiCategories = (categoryData ?? []).filter((c) => c.isActive);
@@ -57,20 +66,33 @@ export default function ProductsPage() {
   }, [searchQuery, selectedCategory, selectedSkinType, sortBy]);
 
   // Catch tranId from ABA's return_url and check the transaction status
-  useEffect(() => {
-    const tranId = searchParams.get('tranId');
-    if (tranId) {
-      checkTransactionMutate(tranId, {
-        onSuccess: (data) => {
-          const status = data?.data?.payment?.status as string;
-          if (status === 'PAID') {
-            clearCart();
-          }
-          setSearchParams({});
-        },
-      });
-    }
-  }, [searchParams]);
+useEffect(() => {
+  const tranId = searchParams.get("tranId");
+
+  if (!tranId) return;
+
+  // Prevent React StrictMode from calling twice
+  if (sessionStorage.getItem("checkingTransaction") === tranId) {
+    return;
+  }
+
+  sessionStorage.setItem("checkingTransaction", tranId);
+
+  checkTransactionMutate(tranId, {
+    onSuccess: () => {
+      clearCart();
+
+      // remove tranId from URL
+      setSearchParams({});
+
+      // allow next payment
+      sessionStorage.removeItem("checkingTransaction");
+    },
+    onError: () => {
+      sessionStorage.removeItem("checkingTransaction");
+    },
+  });
+}, [searchParams, checkTransactionMutate]);
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.min(Math.max(1, page), totalPages));

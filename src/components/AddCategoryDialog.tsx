@@ -6,16 +6,21 @@ import { useCreateCategory } from "@/hook/useCategories";
 export const AddCategoryDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
 
   const { mutate: createCategory, isPending } = useCreateCategory();
 
   const handleCancel = () => {
     setName("");
+    setError("");
     setOpen(false);
   };
 
   const handleSubmit = () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setError("Category name is required");
+      return;
+    }
 
     createCategory(name.trim(), {
       onSuccess: () => handleCancel(),
@@ -39,7 +44,7 @@ export const AddCategoryDialog: React.FC = () => {
 
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-900">Add Category</h2>
-              <button onClick={handleCancel}
+              <button type="button" onClick={handleCancel}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors">
                 <X className="h-4 w-4" />
               </button>
@@ -51,20 +56,26 @@ export const AddCategoryDialog: React.FC = () => {
                 type="text"
                 placeholder="Enter category name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (error) setError("");
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="w-full px-4 py-2.5 text-sm font-normal bg-white border border-gray-100 rounded-xl
-                  outline-none focus:border-gray-300 transition-colors text-gray-900 placeholder:text-gray-400"
+                className={`w-full px-4 py-2.5 text-sm font-normal bg-white border rounded-xl
+                  outline-none transition-colors text-gray-900 placeholder:text-gray-400 ${
+                    error ? "border-red-300 focus:border-red-400" : "border-gray-100 focus:border-gray-300"
+                  }`}
               />
+              {error && <p className="text-xs text-red-500">{error}</p>}
             </div>
 
             <div className="flex items-center justify-end gap-3 px-6 py-5 border-t border-gray-100">
-              <button onClick={handleCancel}
+              <button type="button" onClick={handleCancel}
                 className="px-5 py-2.5 text-sm font-normal text-gray-600 bg-white border border-gray-200
                   rounded-xl hover:bg-gray-50 transition-colors duration-150">
                 Cancel
               </button>
-              <button onClick={handleSubmit} disabled={!name.trim() || isPending}
+              <button type="button" onClick={handleSubmit} disabled={isPending}
                 className="px-5 py-2.5 text-sm font-normal text-white bg-gray-900 rounded-xl
                   hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150">
                 {isPending ? "Saving..." : "Save Category"}

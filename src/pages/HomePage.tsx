@@ -137,11 +137,6 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-center gap-3">
-            <button className="w-2 h-2 rounded-full bg-gray-800" aria-label="Page 1" />
-            <button className="w-2 h-2 rounded-full bg-gray-300" aria-label="Page 2" />
-            <button className="w-2 h-2 rounded-full bg-gray-300" aria-label="Page 3" />
-          </div>
         </div>
       </section>
 

@@ -27,7 +27,8 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
     skinType: product.skinType || "",
     description: product.description || "",
   });
-  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: update, isPending } = useUpdateProduct();
   const { mutate: uploadImage } = useUploadProductImage();
@@ -47,6 +48,7 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
       setImageFile(null);
       setImagePreview(null);
       setHasExistingImage(false);
+      setErrors({});
     }
   }, [open, product]);
 
@@ -54,6 +56,12 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setErrors((prev) => {
+      if (!prev[e.target.name]) return prev;
+      const next = { ...prev };
+      delete next[e.target.name];
+      return next;
+    });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,11 +75,24 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
     setImageFile(null);
     setImagePreview(null);
     setHasExistingImage(false);
+    setErrors({});
     setOpen(false);
   };
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = "Product name is required";
+    if (!form.categoryId) newErrors.categoryId = "Please select a category";
+    if (!String(form.price).trim()) newErrors.price = "Price is required";
+    if (!form.qty.trim()) newErrors.qty = "Stock quantity is required";
+    if (!form.size.trim()) newErrors.size = "Size is required";
+    if (!form.skinType.trim()) newErrors.skinType = "Skin type is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = () => {
-    if (!form.name || !form.categoryId || !form.price || !form.qty) return;
+    if (!validate()) return;
 
     update(
       {
@@ -128,7 +149,7 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
 
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-900">Edit Product</h2>
-              <button onClick={handleClose} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-50">
+              <button type="button" onClick={handleClose} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-50">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -175,38 +196,50 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
 
               <div className="space-y-1.5">
                 <label className="text-sm text-gray-600">Product Name</label>
-                <input name="name" type="text" value={form.name} onChange={handleChange} className={inputClass} />
+                <input name="name" type="text" value={form.name} onChange={handleChange}
+                  className={`${inputClass} ${errors.name ? "border-red-300 focus:border-red-400" : ""}`} />
+                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-sm text-gray-600">Category</label>
-                <select name="categoryId" value={form.categoryId} onChange={handleChange} className={`${inputClass} cursor-pointer`}>
+                <select name="categoryId" value={form.categoryId} onChange={handleChange}
+                  className={`${inputClass} cursor-pointer ${errors.categoryId ? "border-red-300 focus:border-red-400" : ""}`}>
                   <option value="" disabled>Select category</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
+                {errors.categoryId && <p className="text-xs text-red-500">{errors.categoryId}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm text-gray-600">Price ($)</label>
-                  <input name="price" type="number" value={form.price} onChange={handleChange} className={inputClass} />
+                  <input name="price" type="number" value={form.price} onChange={handleChange}
+                    className={`${inputClass} ${errors.price ? "border-red-300 focus:border-red-400" : ""}`} />
+                  {errors.price && <p className="text-xs text-red-500">{errors.price}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm text-gray-600">Stock</label>
-                  <input name="qty" type="number" value={form.qty} onChange={handleChange} className={inputClass} />
+                  <input name="qty" type="number" value={form.qty} onChange={handleChange}
+                    className={`${inputClass} ${errors.qty ? "border-red-300 focus:border-red-400" : ""}`} />
+                  {errors.qty && <p className="text-xs text-red-500">{errors.qty}</p>}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm text-gray-600">Size</label>
-                  <input name="size" type="text" placeholder="e.g. 100ml" value={form.size} onChange={handleChange} className={inputClass} />
+                  <input name="size" type="text" placeholder="e.g. 100ml" value={form.size} onChange={handleChange}
+                    className={`${inputClass} ${errors.size ? "border-red-300 focus:border-red-400" : ""}`} />
+                  {errors.size && <p className="text-xs text-red-500">{errors.size}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm text-gray-600">Skin Type</label>
-                  <input name="skinType" type="text" placeholder="e.g. Oily, Dry" value={form.skinType} onChange={handleChange} className={inputClass} />
+                  <input name="skinType" type="text" placeholder="e.g. Oily, Dry" value={form.skinType} onChange={handleChange}
+                    className={`${inputClass} ${errors.skinType ? "border-red-300 focus:border-red-400" : ""}`} />
+                  {errors.skinType && <p className="text-xs text-red-500">{errors.skinType}</p>}
                 </div>
               </div>
 
@@ -218,11 +251,11 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
             </div>
 
             <div className="flex justify-end gap-3 px-6 py-5 border-t border-gray-100">
-              <button onClick={handleClose}
+              <button type="button" onClick={handleClose}
                 className="px-5 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
                 Cancel
               </button>
-              <button onClick={handleSubmit} disabled={isPending}
+              <button type="button" onClick={handleSubmit} disabled={isPending}
                 className="px-5 py-2.5 text-sm text-white bg-gray-900 rounded-xl hover:bg-gray-700 disabled:opacity-50">
                 {isPending ? "Saving..." : "Update Product"}
               </button>
