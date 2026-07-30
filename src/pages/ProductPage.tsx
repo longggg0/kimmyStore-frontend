@@ -33,7 +33,7 @@ export default function ProductsPage() {
 // }, [searchParams]);
   const { mutate: checkTransactionMutate } = useCheckTransaction();
 
-  const apiCategories = (categoryData ?? []).filter((c) => c.isActive);
+  const apiCategories = (categoryData ?? []).filter((c) => c.isActive !== false);
   const categories = ['all', ...apiCategories.map((c) => c.name)];
 
   const selectedCategoryId = selectedCategory === 'all'
@@ -99,7 +99,7 @@ useEffect(() => {
   };
 
   const FilterPanel = () => (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-4">
         <button
           onClick={() => setCategoryExpanded(!categoryExpanded)}
@@ -167,25 +167,25 @@ useEffect(() => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl text-gray-900 mb-4">{t('products.title')}</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl text-gray-900 mb-3 sm:mb-4">{t('products.title')}</h1>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             <input
               type="text"
               placeholder={t('products.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
+              className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
             />
           </div>
         </div>
 
-        <div className="flex gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
           {/* Desktop Sidebar */}
           <div className="hidden lg:block w-64 flex-shrink-0">
@@ -198,14 +198,14 @@ useEffect(() => {
           </div>
 
           {/* Main content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
 
             {/* Mobile filter button */}
-            <div className="lg:hidden mb-4 flex items-center justify-between">
-              <p className="text-sm text-gray-600">{sorted.length} {t('products.found')}</p>
+            <div className="lg:hidden mb-4 flex items-center justify-between gap-3">
+              <p className="text-xs sm:text-sm text-gray-600 truncate">{sorted.length} {t('products.found')}</p>
               <button
                 onClick={() => setShowFilters(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-pink-400 text-white rounded-lg hover:bg-pink-500 transition-colors"
+                className="flex-shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 bg-pink-400 text-white text-sm rounded-lg hover:bg-pink-500 transition-colors"
               >
                 <Filter className="w-4 h-4" />
                 {t('filter.title')}
@@ -215,8 +215,8 @@ useEffect(() => {
             {/* Mobile filter overlay */}
             {showFilters && (
               <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setShowFilters(false)}>
-                <div className="absolute right-0 top-0 bottom-0 w-80 bg-white overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                  <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-5 flex items-center justify-between">
+                <div className="absolute right-0 top-0 bottom-0 w-[85vw] max-w-sm bg-white overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between">
                     <h3 className="text-lg text-gray-900">{t('filter.title')}</h3>
                     <button onClick={() => setShowFilters(false)}>
                       <X className="w-6 h-6" />
@@ -229,11 +229,11 @@ useEffect(() => {
 
             {/* Loading skeletons — only on very first load, no data yet */}
             {isLoading && !data && (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 animate-pulse">
                     <div className="aspect-[3/4] bg-gray-200" />
-                    <div className="p-4 space-y-2">
+                    <div className="p-3 sm:p-4 space-y-2">
                       <div className="h-3 bg-gray-200 rounded w-1/2" />
                       <div className="h-4 bg-gray-200 rounded w-3/4" />
                       <div className="h-4 bg-gray-200 rounded w-1/3" />
@@ -246,21 +246,21 @@ useEffect(() => {
 
             {/* Error */}
             {isError && (
-              <div className="text-center py-20">
+              <div className="text-center py-16 sm:py-20 px-4">
                 <p className="text-red-500 text-sm">{t('products.error')}</p>
               </div>
             )}
 
             {/* Empty */}
             {!isLoading && !isError && data && sorted.length === 0 && (
-              <div className="text-center py-20">
+              <div className="text-center py-16 sm:py-20 px-4">
                 <p className="text-gray-400 text-sm">{t('products.empty')}</p>
               </div>
             )}
 
             {/* Product grid */}
             {!isError && data && sorted.length > 0 && (
-              <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 transition-opacity duration-200 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
+              <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 transition-opacity duration-200 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
                 {sorted.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
@@ -270,11 +270,11 @@ useEffect(() => {
             {/* Pagination — driven by server-side totalPages, which now
                 correctly accounts for the skinType filter too. */}
             {!isError && data && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
+              <div className="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2 mt-6 sm:mt-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                 <button
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage <= 1}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex-shrink-0 px-3 sm:px-4 py-2 rounded-lg border border-gray-300 text-xs sm:text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Prev
                 </button>
@@ -283,7 +283,7 @@ useEffect(() => {
                   <button
                     key={page}
                     onClick={() => goToPage(page)}
-                    className={`w-9 h-9 rounded-lg text-sm transition-colors ${
+                    className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg text-xs sm:text-sm transition-colors ${
                       currentPage === page
                         ? 'bg-pink-400 text-white'
                         : 'border border-gray-300 text-gray-700 hover:border-pink-400 hover:text-pink-400'
@@ -296,7 +296,7 @@ useEffect(() => {
                 <button
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage >= totalPages}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex-shrink-0 px-3 sm:px-4 py-2 rounded-lg border border-gray-300 text-xs sm:text-sm text-gray-700 hover:border-pink-400 hover:text-pink-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                 </button>

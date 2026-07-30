@@ -7,7 +7,8 @@ import type {
   SingleProductResponse,
 } from "@/types/Product";
 
-const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v3/product`;;
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v3/product`;
+// const BASE_URL = "http://localhost:3000/api/v3/product";
 
 const checkResponse = async (response: Response, label: string): Promise<void> => {
   if (!response.ok) {
