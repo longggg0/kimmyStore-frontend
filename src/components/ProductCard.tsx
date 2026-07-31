@@ -44,7 +44,7 @@ export default function ProductCard({ product }: { product: Product }) {
     >
       <div className="relative overflow-hidden aspect-[3/4] bg-pink-50">
         <img
-          src={`https://kimmystore-backend.onrender.com/api/v3/product/images/${product.id}/download`}
+          src={`https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${product.id}/download`}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           onError={(e) => { e.currentTarget.style.display = 'none'; }}

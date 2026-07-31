@@ -132,7 +132,7 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
   const inputClass = `w-full px-4 py-2.5 text-sm bg-white border border-gray-100 rounded-xl
     outline-none focus:border-gray-300 transition-colors text-gray-900 placeholder:text-gray-400`;
 
-  const currentImageUrl = `https://kimmystore-backend.onrender.com/api/v3/product/images/${product.id}/download?t=${new Date(product.updatedAt).getTime()}`;
+  const currentImageUrl = `https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${product.id}/download?t=${new Date(product.updatedAt).getTime()}`;
 
   return (
     <>

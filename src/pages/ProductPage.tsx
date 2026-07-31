@@ -32,6 +32,7 @@ export default function ProductsPage() {
 //   }
 // }, [searchParams]);
   const { mutate: checkTransactionMutate } = useCheckTransaction();
+  
 
   const apiCategories = (categoryData ?? []).filter((c) => c.isActive !== false);
   const categories = ['all', ...apiCategories.map((c) => c.name)];
@@ -80,6 +81,7 @@ useEffect(() => {
 
   checkTransactionMutate(tranId, {
     onSuccess: () => {
+      console.log('[DEBUG] clearCart called from ProductsPage tranId effect');
       clearCart();
 
       // remove tranId from URL

@@ -7,7 +7,7 @@ import { useWishlist } from '@/Context/WishlistContext';
 import { useLanguage } from '../Context/LanguageContext';
 import { useDiscountMap } from '@/hook/usePromotion';
 
-const IMAGE_URL = (id: number) => `https://kimmystore-backend.onrender.com/api/v3/product/images/${id}/download`;
+const IMAGE_URL = (id: number) => `https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${id}/download`;
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();

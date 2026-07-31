@@ -8,10 +8,12 @@ import { orderService } from '@/services/order.service';
 import { useAuth } from '@/Context/AuthContext';
 import type { CreateOrderPayload } from '@/types/order';
 import { createPayment } from '@/services/payment.service';
+import { useCheckTransaction } from '@/hook/usePayment';
 
 declare const AbaPayway: { checkout: () => void } | undefined;
 
 export default function CheckoutPage() {
+  const { mutateAsync: checkTransactionAsync } = useCheckTransaction();
   const [paymentMethod, setPaymentMethod] = useState('delivery');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -71,6 +73,7 @@ export default function CheckoutPage() {
 
         if (paymentRes.data) {
           const payway = paymentRes.data.payway;
+          
 
           const form = document.getElementById('aba_merchant_request') as HTMLFormElement;
           if (!form) return;
@@ -132,6 +135,7 @@ sessionStorage.setItem(
 // AbaPayway?.checkout();
 
           AbaPayway?.checkout();
+
         }
       } else {
         clearCart();
@@ -230,7 +234,7 @@ sessionStorage.setItem(
                   return (
                     <div key={item.product.id} className="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
                       <div className="overflow-hidden rounded-lg flex-shrink-0">
-                        <img src={`https://kimmystore-backend.onrender.com/api/v3/product/images/${item.product.id}/download`}
+                        <img src={`https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${item.product.id}/download`}
                           alt={item.product.name} className="w-14 h-14 sm:w-16 sm:h-16 object-cover"
                           onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                       </div>
