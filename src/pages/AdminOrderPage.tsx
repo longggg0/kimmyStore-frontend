@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { AdminLayout } from "../components/AdminLayout";
-import { Download, Search,  } from "lucide-react";
+import { Download,  } from "lucide-react";
 import { useOrder } from "@/hook/useOrder";
 import { orderService } from "@/services/order.service";
 import { Badge } from "@/components/ui/badge";
 export const AdminOrdersPage: React.FC = () => {
-  const [search, setSearch] = useState("");
+  const [search] = useState("");
   const { orders, loading, error } = useOrder();
 
   const handleDownload = async (id: number) => {
@@ -33,7 +33,7 @@ export const AdminOrdersPage: React.FC = () => {
           <p className="text-sm font-normal text-gray-400">Manage customer orders</p>
         </div>
 
-        {/* Search */}
+        {/* Search
         <div className="relative max-w-sm">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -45,7 +45,7 @@ export const AdminOrdersPage: React.FC = () => {
               rounded-xl outline-none focus:border-gray-300 transition-colors duration-150
               text-gray-900 placeholder:text-gray-400"
           />
-        </div>
+        </div> */}
 
         {/* States */}
         {loading && (
