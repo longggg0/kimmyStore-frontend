@@ -8,12 +8,10 @@ import { orderService } from '@/services/order.service';
 import { useAuth } from '@/Context/AuthContext';
 import type { CreateOrderPayload } from '@/types/order';
 import { createPayment } from '@/services/payment.service';
-import { useCheckTransaction } from '@/hook/usePayment';
 
 declare const AbaPayway: { checkout: () => void } | undefined;
 
 export default function CheckoutPage() {
-  const { mutateAsync: checkTransactionAsync } = useCheckTransaction();
   const [paymentMethod, setPaymentMethod] = useState('delivery');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fullName, setFullName] = useState('');
