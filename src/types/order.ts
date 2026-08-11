@@ -16,6 +16,8 @@ export interface OrderDetail {
   productId: number;
   productName: string | null;
   productPrice: string | null;
+  originalPrice: number | string;
+  discountPercent: number | string;
   qty: number;
   amount: string;
   createdAt: string;

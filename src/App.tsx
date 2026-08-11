@@ -17,6 +17,7 @@ import { AdminBrandsPage } from "./pages/AdminBrandsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminPromotionPage } from "./pages/AdminPromotionPage";
 import { Toaster } from "sonner";
+import { AdminUserManagement } from "./pages/AdminUserManagement";
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/admin-order" element={<AdminOrdersPage />} />
           <Route path="/admin-brands" element={<AdminBrandsPage />} />
           <Route path="/admin-promotion" element={<AdminPromotionPage/>}/>
+          <Route path="/user-management" element={<AdminUserManagement/>}/>
         </Route>
       </Routes>
     </div>

@@ -5,6 +5,7 @@ import { useProductsPaginated } from '@/hook/useProduct';
 import ProductCard from '@/components/ProductCard';
 import { useLanguage } from '../Context/LanguageContext';
 import { useCategory } from '@/hook/useCategories';
+import { useGetBrands } from '@/hook/useBrand';
 import { useCheckTransaction } from '@/hook/usePayment';
 import { useCart } from '@/Context/CartContext';
 
@@ -12,40 +13,44 @@ export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedBrand, setSelectedBrand] = useState(
+    () => searchParams.get('brand') ?? 'all'
+  );
   const [selectedSkinType, setSelectedSkinType] = useState('all');
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
   const [categoryExpanded, setCategoryExpanded] = useState(true);
+  const [brandExpanded, setBrandExpanded] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const { clearCart } = useCart();
   const limit = 8;
 
   const { t } = useLanguage();
   const { data: categoryData } = useCategory();
-//   useEffect(() => {
-//   const tranId = searchParams.get("tranId");
+  const { data: brandData } = useGetBrands();
 
-//   console.log("tranId:", tranId);
-
-//   if (tranId) {
-//     checkTransactionMutate(tranId);
-//   }
-// }, [searchParams]);
   const { mutate: checkTransactionMutate } = useCheckTransaction();
-  
 
   const apiCategories = (categoryData ?? []).filter((c) => c.isActive !== false);
   const categories = ['all', ...apiCategories.map((c) => c.name)];
 
+  const apiBrands = brandData?.data ?? [];
+  const brands = ['all', ...apiBrands.map((b) => b.name)];
+
   const selectedCategoryId = selectedCategory === 'all'
     ? undefined
     : apiCategories.find((c) => c.name === selectedCategory)?.id;
+
+  const selectedBrandId = selectedBrand === 'all'
+    ? undefined
+    : apiBrands.find((b) => b.name === selectedBrand)?.id;
 
   const { data, isLoading, isError, isFetching } = useProductsPaginated({
     page: currentPage,
     limit,
     search: searchQuery || undefined,
     categoryId: selectedCategoryId,
+    brandId: selectedBrandId,
     skinType: selectedSkinType,
   });
 
@@ -53,8 +58,6 @@ export default function ProductsPage() {
   const pagination = data?.pagination;
   const totalPages = pagination ? Math.ceil(pagination.total / limit) : 1;
 
-  // Skin type is now filtered server-side. Sort is still applied client-side
-  // to the current page only, since the API doesn't support sorting yet.
   const sorted = [...products].sort((a, b) => {
     if (sortBy === 'price-asc') return parseFloat(a.price) - parseFloat(b.price);
     if (sortBy === 'price-desc') return parseFloat(b.price) - parseFloat(a.price);
@@ -64,37 +67,38 @@ export default function ProductsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedSkinType, sortBy]);
+  }, [searchQuery, selectedCategory, selectedBrand, selectedSkinType, sortBy]);
 
-  // Catch tranId from ABA's return_url and check the transaction status
-useEffect(() => {
-  const tranId = searchParams.get("tranId");
+  useEffect(() => {
+    const brandParam = searchParams.get('brand');
+    if (brandParam && brandParam !== selectedBrand) {
+      setSelectedBrand(brandParam);
+    }
+  }, [searchParams]);
 
-  if (!tranId) return;
+  useEffect(() => {
+    const tranId = searchParams.get("tranId");
 
-  // Prevent React StrictMode from calling twice
-  if (sessionStorage.getItem("checkingTransaction") === tranId) {
-    return;
-  }
+    if (!tranId) return;
 
-  sessionStorage.setItem("checkingTransaction", tranId);
+    if (sessionStorage.getItem("checkingTransaction") === tranId) {
+      return;
+    }
 
-  checkTransactionMutate(tranId, {
-    onSuccess: () => {
-      console.log('[DEBUG] clearCart called from ProductsPage tranId effect');
-      clearCart();
+    sessionStorage.setItem("checkingTransaction", tranId);
 
-      // remove tranId from URL
-      setSearchParams({});
-
-      // allow next payment
-      sessionStorage.removeItem("checkingTransaction");
-    },
-    onError: () => {
-      sessionStorage.removeItem("checkingTransaction");
-    },
-  });
-}, [searchParams, checkTransactionMutate]);
+    checkTransactionMutate(tranId, {
+      onSuccess: () => {
+        console.log('[DEBUG] clearCart called from ProductsPage tranId effect');
+        clearCart();
+        setSearchParams({});
+        sessionStorage.removeItem("checkingTransaction");
+      },
+      onError: () => {
+        sessionStorage.removeItem("checkingTransaction");
+      },
+    });
+  }, [searchParams, checkTransactionMutate]);
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.min(Math.max(1, page), totalPages));
@@ -123,6 +127,35 @@ useEffect(() => {
                 }`}
               >
                 {category === 'all' ? t('filter.allCategories') : category}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-gray-100 my-5" />
+
+      <div className="mb-4">
+        <button
+          onClick={() => setBrandExpanded(!brandExpanded)}
+          className="w-full flex items-center justify-between mb-3 text-gray-900"
+        >
+          <span className="text-sm font-medium">{t('filter.byBrand')}</span>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${brandExpanded ? 'rotate-180' : ''}`} />
+        </button>
+        {brandExpanded && (
+          <div className="flex flex-wrap gap-2">
+            {brands.map((brand) => (
+              <button
+                key={brand}
+                onClick={() => setSelectedBrand(brand)}
+                className={`px-3 py-1.5 rounded-full text-xs transition-all duration-200 ${
+                  selectedBrand === brand
+                    ? 'bg-[#ff6b9d] text-white'
+                    : 'border border-gray-300 text-gray-700 hover:border-[#ff6b9d] hover:text-[#ff6b9d]'
+                }`}
+              >
+                {brand === 'all' ? t('filter.allBrands') : brand}
               </button>
             ))}
           </div>

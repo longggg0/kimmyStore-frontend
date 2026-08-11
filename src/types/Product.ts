@@ -2,6 +2,7 @@ export interface Product {
   id: number;
   name: string;
   categoryId: number;
+  brandId: number | null;
   price: string;
   qty: number;
   skinType: string;
@@ -13,6 +14,11 @@ export interface Product {
     id: number;
     name: string;
   };
+  brand: {
+    id: number;
+    name: string;
+    image: string;
+  } | null;
   productImages?: ProductImage[];
 }
 
@@ -24,6 +30,7 @@ export interface ProductResponse {
 export interface ProductBody {
   name: string;
   categoryId: number;
+  brandId?: number | null;
   price: string;
   qty: number;
   skinType: string;
@@ -41,10 +48,10 @@ export interface ProductImage {
 export interface ProductImageResponse {
   data: ProductImage;
 }
-// Product.ts
+
 export interface CreateProductResponse {
   message: string;
-  data: Product; // single Product returned after creation
+  data: Product;
 }
 export interface SingleProductResponse {
   data: Product;

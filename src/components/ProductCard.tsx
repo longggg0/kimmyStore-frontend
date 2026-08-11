@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Heart, ShoppingCart, Star, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import type { Product } from '@/types/Product';
 import { useCart } from '@/Context/CartContext';
 import { useWishlist } from '@/Context/WishlistContext';
 import { useGetActivePromotions } from '@/hook/usePromotion';
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { addToCart } = useCart();
+  const { addToCart, items } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
@@ -24,9 +25,24 @@ export default function ProductCard({ product }: { product: Product }) {
   const originalPrice = parseFloat(product.price);
   const discountedPrice = originalPrice * (1 - discountPercent / 100);
 
+  // how many of this product are already sitting in the cart
+  const inCartQty = items.find((i) => i.product.id === product.id)?.quantity ?? 0;
+  const isOutOfStock = product.qty === 0;
+  const isMaxedOut = !isOutOfStock && inCartQty >= product.qty;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (product.qty === 0) return;
+
+    if (isOutOfStock) {
+      toast.error('This product is out of stock.');
+      return;
+    }
+
+    if (isMaxedOut) {
+      toast.error(`Only ${product.qty} in stock. You already have ${inCartQty} in your cart.`);
+      return;
+    }
+
     addToCart(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -117,8 +133,9 @@ export default function ProductCard({ product }: { product: Product }) {
 
         <button
           onClick={handleAddToCart}
-          disabled={product.qty === 0}
-          className={`w-full mt-auto px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-pink-500 text-white hover:bg-pink-500
+          aria-disabled={isOutOfStock || isMaxedOut}
+          className={`w-full mt-auto px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-white
+    ${isOutOfStock || isMaxedOut ? 'bg-gray-300 cursor-not-allowed hover:bg-gray-300' : 'bg-pink-500 hover:bg-pink-500'}
     ${added ? 'shadow-[inset_0_2px_8px_rgba(0,0,0,0.25)]' : ''}
   `}
         >
@@ -130,7 +147,9 @@ export default function ProductCard({ product }: { product: Product }) {
           ) : (
             <>
               <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-[11px] sm:text-sm font-medium">Add to Cart</span>
+              <span className="text-[11px] sm:text-sm font-medium">
+                {isOutOfStock ? 'Out of Stock' : isMaxedOut ? 'Max in Cart' : 'Add to Cart'}
+              </span>
             </>
           )}
         </button>

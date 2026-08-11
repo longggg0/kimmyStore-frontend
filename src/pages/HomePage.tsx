@@ -126,15 +126,17 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
             {brands.map((brand) => (
-              <div key={brand.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-                <div className="aspect-square overflow-hidden">
-                  <img
-                    src={brand.image}
-                    alt={brand.name}
-                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
+              <Link key={brand.id} to={`/productPage?brand=${encodeURIComponent(brand.name)}`}>
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                  <div className="aspect-square overflow-hidden">
+                    <img
+                      src={brand.image}
+                      alt={brand.name}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

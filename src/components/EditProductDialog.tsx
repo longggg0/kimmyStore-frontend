@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { ImagePlus, Pencil, X } from "lucide-react";
 import type { Product } from "@/types/Product";
 import { useUpdateProduct, useUploadProductImage, useUpdateProductImage } from "@/hook/useProduct";
+import { useGetBrands } from "@/hook/useBrand";
 
 interface EditProductDialogProps {
   product: Product;
@@ -21,6 +22,7 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
   const [form, setForm] = useState({
     name: product.name,
     categoryId: String(product.categoryId),
+    brandId: product.brandId ? String(product.brandId) : "",
     price: product.price,
     qty: String(product.qty),
     size: product.size || "",
@@ -33,12 +35,15 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
   const { mutate: update, isPending } = useUpdateProduct();
   const { mutate: uploadImage } = useUploadProductImage();
   const { mutate: updateImage } = useUpdateProductImage();
+  const { data: brandsData } = useGetBrands();
+  const brands = brandsData?.data ?? [];
 
   useEffect(() => {
     if (open) {
       setForm({
         name: product.name,
         categoryId: String(product.categoryId),
+        brandId: product.brandId ? String(product.brandId) : "",
         price: product.price,
         qty: String(product.qty),
         size: product.size || "",
@@ -100,6 +105,7 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
         body: {
           name: form.name,
           categoryId: Number(form.categoryId),
+          brandId: form.brandId ? Number(form.brandId) : null,
           price: form.price,
           qty: Number(form.qty),
           size: form.size,
@@ -211,6 +217,17 @@ export const EditProductDialog: React.FC<EditProductDialogProps> = ({
                   ))}
                 </select>
                 {errors.categoryId && <p className="text-xs text-red-500">{errors.categoryId}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm text-gray-600">Brand</label>
+                <select name="brandId" value={form.brandId} onChange={handleChange}
+                  className={`${inputClass} cursor-pointer`}>
+                  <option value="">No brand</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>{brand.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

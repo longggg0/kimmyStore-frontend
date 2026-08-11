@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Star, Heart, ShoppingCart, ArrowLeft, Share2, Check } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useProductById } from '@/hook/useProduct';
 import { useCart } from '@/Context/CartContext';
 import { useWishlist } from '@/Context/WishlistContext';
@@ -16,22 +17,50 @@ export default function ProductDetailPage() {
   const { data, isLoading, isError } = useProductById(Number(id));
   const product = data?.data;
 
-  const { addToCart } = useCart();
+  const { addToCart, items } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const discountMap = useDiscountMap();
 
   const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState('1'); // raw text while typing
   const [added, setAdded] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const wishlisted = product ? isWishlisted(product.id) : false;
 
+  // how many of this product are already sitting in the cart
+  const inCartQty = product
+    ? items.find((i) => i.product.id === product.id)?.quantity ?? 0
+    : 0;
+  const isOutOfStock = !product || product.qty === 0;
+  const isMaxedOut = !isOutOfStock && inCartQty >= product.qty;
+  const remainingStock = product ? Math.max(0, product.qty - inCartQty) : 0;
+
   const handleAddToCart = () => {
-    if (!product || product.qty === 0) return;
-    for (let i = 0; i < quantity; i++) {
+    if (!product) return;
+
+    if (isOutOfStock) {
+      toast.error('This product is out of stock.');
+      return;
+    }
+
+    if (isMaxedOut) {
+      toast.error(`Only ${product.qty} in stock. You already have ${inCartQty} in your cart.`);
+      return;
+    }
+
+    // clamp in case the selected quantity is more than what's actually left
+    const qtyToAdd = Math.min(quantity, remainingStock);
+
+    for (let i = 0; i < qtyToAdd; i++) {
       addToCart(product);
     }
+
+    if (qtyToAdd < quantity) {
+      toast.error(`Only ${remainingStock} more available — added ${qtyToAdd} to your cart.`);
+    }
+
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -169,9 +198,6 @@ export default function ProductDetailPage() {
               {hasDiscount && (
                 <>
                   <span className="text-lg sm:text-xl text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
-                  {/* <span className="text-sm bg-pink-50 text-pink-600 px-2.5 py-1 rounded-full">
-                    -{discountPercent}%
-                  </span> */}
                 </>
               )}
             </div>
@@ -185,6 +211,11 @@ export default function ProductDetailPage() {
               ) : (
                 <span className="inline-flex items-center gap-2 text-red-500 bg-red-50 px-3 py-1.5 rounded-full text-xs sm:text-sm">
                   {t('detail.outOfStock')}
+                </span>
+              )}
+              {isMaxedOut && (
+                <span className="ml-2 inline-flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full text-xs sm:text-sm">
+                  All {product.qty} already in your cart
                 </span>
               )}
             </div>
@@ -205,15 +236,71 @@ export default function ProductDetailPage() {
               <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.quantity')}</h3>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={() => {
+                    const next = Math.max(1, quantity - 1);
+                    setQuantity(next);
+                    setQuantityInput(String(next));
+                  }}
                   className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
                 >
                   -
                 </button>
-                <span className="text-base sm:text-lg w-12 text-center">{quantity}</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={remainingStock || 1}
+                  value={quantityInput}
+                  disabled={isOutOfStock}
+                  onChange={(e) => {
+                    // let the user type freely (including empty, "0", partial numbers)
+                    // no clamping here — clamping mid-type would fight the user's typing
+                    setQuantityInput(e.target.value);
+                  }}
+                  onBlur={() => {
+                    const parsed = parseInt(quantityInput, 10);
+
+                    if (quantityInput === '' || isNaN(parsed) || parsed < 1) {
+                      setQuantity(1);
+                      setQuantityInput('1');
+                      return;
+                    }
+
+                    if (parsed > remainingStock) {
+                      toast.error(
+                        remainingStock === 0
+                          ? 'No more stock available for this product.'
+                          : `Only ${remainingStock} available — quantity set to ${remainingStock}.`
+                      );
+                      setQuantity(remainingStock);
+                      setQuantityInput(String(remainingStock));
+                      return;
+                    }
+
+                    setQuantity(parsed);
+                    setQuantityInput(String(parsed));
+                  }}
+                  onKeyDown={(e) => {
+                    // let Enter behave like blur, so the value confirms immediately
+                    if (e.key === 'Enter') e.currentTarget.blur();
+                  }}
+                  className="text-base sm:text-lg w-14 sm:w-16 text-center border-2 border-gray-200 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
                 <button
-                  onClick={() => setQuantity(Math.min(product.qty, quantity + 1))}
-                  disabled={product.qty === 0}
+                  onClick={() => {
+                    if (quantity >= remainingStock) {
+                      toast.error(
+                        remainingStock === 0
+                          ? 'No more stock available for this product.'
+                          : `Only ${remainingStock} more available to add.`
+                      );
+                      return;
+                    }
+                    const next = quantity + 1;
+                    setQuantity(next);
+                    setQuantityInput(String(next));
+                  }}
+                  disabled={isOutOfStock}
                   className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   +
@@ -224,9 +311,13 @@ export default function ProductDetailPage() {
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <button
                 onClick={handleAddToCart}
-                disabled={product.qty === 0}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-full transition-all duration-300 bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base
-                  ${added ? 'bg-pink-500 text-white' : 'bg-[#ff6b9d] text-white hover:bg-[#e5588a]'}`}
+                aria-disabled={isOutOfStock || isMaxedOut}
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-full transition-all duration-300 text-sm sm:text-base
+                  ${isOutOfStock || isMaxedOut
+                    ? 'bg-gray-300 text-white cursor-not-allowed hover:bg-gray-300'
+                    : added
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-[#ff6b9d] text-white hover:bg-[#e5588a]'}`}
               >
                 {added ? (
                   <>
@@ -236,7 +327,7 @@ export default function ProductDetailPage() {
                 ) : (
                   <>
                     <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                    {t('detail.addToCart')}
+                    {isOutOfStock ? 'Out of Stock' : isMaxedOut ? 'Max in Cart' : t('detail.addToCart')}
                   </>
                 )}
               </button>

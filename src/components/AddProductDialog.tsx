@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { useCreateProduct, useUploadProductImage } from "@/hook/useProduct";
+import { useGetBrands } from "@/hook/useBrand";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface AddProductDialogProps {
@@ -14,6 +15,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
   const [form, setForm] = useState({
     name: "",
     categoryId: "",
+    brandId: "",
     price: "",
     qty: "",
     size: "",
@@ -26,6 +28,8 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
   const queryClient = useQueryClient();
   const { mutate: createProduct, isPending } = useCreateProduct();
   const { mutate: uploadImage } = useUploadProductImage();
+  const { data: brandsData } = useGetBrands();
+  const brands = brandsData?.data ?? [];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -51,7 +55,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
   };
 
   const handleCancel = () => {
-    setForm({ name: "", categoryId: "", price: "", qty: "", size: "", skinType: "", description: "" });
+    setForm({ name: "", categoryId: "", brandId: "", price: "", qty: "", size: "", skinType: "", description: "" });
     setImageFile(null);
     setImagePreview(null);
     setErrors({});
@@ -78,6 +82,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
       {
         name: form.name,
         categoryId: Number(form.categoryId),
+        brandId: form.brandId ? Number(form.brandId) : null,
         price: form.price,
         qty: Number(form.qty),
         size: form.size,
@@ -91,6 +96,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
   const newProductId = newProduct?.id;
 
   const matchedCategory = categories.find((c) => c.id === Number(form.categoryId));
+  const matchedBrand = brands.find((b) => b.id === Number(form.brandId));
 
   queryClient.setQueriesData(
     { predicate: (query) => query.queryKey[0] === "products" || query.queryKey[0] === "products-paginated" },
@@ -103,6 +109,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
           {
             ...newProduct,
             category: matchedCategory ? { id: matchedCategory.id, name: matchedCategory.name } : null,
+            brand: matchedBrand ? { id: matchedBrand.id, name: matchedBrand.name, image: matchedBrand.image } : null,
             imagePreview, // local blob URL for instant display
           },
         ],
@@ -199,6 +206,17 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({ categories }
                   ))}
                 </select>
                 {errors.categoryId && <p className="text-xs text-red-500">{errors.categoryId}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm text-gray-600">Brand</label>
+                <select name="brandId" value={form.brandId} onChange={handleChange}
+                  className={`${inputClass} cursor-pointer`}>
+                  <option value="">No brand</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>{brand.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

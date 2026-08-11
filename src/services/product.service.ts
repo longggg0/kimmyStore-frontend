@@ -97,10 +97,10 @@ export interface GetProductsParams {
   page?: number;
   limit?: number;
   search?: string;
+  brandId?: number;
   categoryId?: number;
   skinType?: string;
 }
-
 export const getProductsPaginated = async (
   params?: GetProductsParams
 ): Promise<PaginatedProductResponse> => {
@@ -109,6 +109,7 @@ export const getProductsPaginated = async (
   query.set("page", String(params?.page ?? 1));
   if (params?.search) query.set("search", params.search);
   if (params?.categoryId) query.set("categoryId", String(params.categoryId));
+  if (params?.brandId) query.set("brandId", String(params.brandId));
   if (params?.skinType && params.skinType !== "all") query.set("skinType", params.skinType);
 
   const response = await fetch(`${BASE_URL}?${query.toString()}`);

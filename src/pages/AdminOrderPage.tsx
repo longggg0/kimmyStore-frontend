@@ -1,11 +1,24 @@
 import React, { useState } from "react";
 import { AdminLayout } from "../components/AdminLayout";
-import { Download,  } from "lucide-react";
+import {
+  Download,
+  X,
+  Package,
+  Calendar,
+  MapPin,
+  User,
+  Mail,
+  Phone,
+  FileText,
+} from "lucide-react";
 import { useOrder } from "@/hook/useOrder";
 import { orderService } from "@/services/order.service";
 import { Badge } from "@/components/ui/badge";
+
 export const AdminOrdersPage: React.FC = () => {
   const [search] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+
   const { orders, loading, error } = useOrder();
 
   const handleDownload = async (id: number) => {
@@ -16,58 +29,96 @@ export const AdminOrdersPage: React.FC = () => {
     }
   };
 
-  const filtered = orders.filter((o) => {
-    const fullName = `${o.customers.firstName} ${o.customers.lastName}`.toLowerCase();
-    const orderNum = String(o.orderNumber).toLowerCase();
+  const handleViewOrder = (orderId: number) => {
+    setSelectedOrderId(orderId);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedOrderId(null);
+  };
+
+  const filtered = orders.filter((order) => {
+    const fullName =
+      `${order.customers.firstName} ${order.customers.lastName}`.toLowerCase();
+
+    const username =
+      order.customers.username?.toLowerCase() ?? "";
+
+    const orderNum = String(order.orderNumber).toLowerCase();
+
     const query = search.toLowerCase();
-    return fullName.includes(query) || orderNum.includes(query);
+
+    return (
+      fullName.includes(query) ||
+      username.includes(query) ||
+      orderNum.includes(query)
+    );
   });
+
+  const selectedOrder = orders.find(
+    (order) => order.id === selectedOrderId
+  );
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-
+      <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-semibold text-gray-900 mb-1">Orders</h1>
-          <p className="text-sm font-normal text-gray-400">Manage customer orders</p>
-        </div>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-1">
+            Orders
+          </h1>
 
-        {/* Search
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by customer or order number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm font-normal bg-white border border-gray-100
-              rounded-xl outline-none focus:border-gray-300 transition-colors duration-150
-              text-gray-900 placeholder:text-gray-400"
-          />
-        </div> */}
+          <p className="text-sm font-normal text-gray-400">
+            Manage customer orders
+          </p>
+        </div>
 
         {/* States */}
         {loading && (
-          <p className="text-sm text-gray-400 text-center py-12">Loading orders...</p>
+          <p className="text-sm text-gray-400 text-center py-12">
+            Loading orders...
+          </p>
         )}
+
         {error && (
-          <p className="text-sm text-red-500 text-center py-12">{error}</p>
+          <p className="text-sm text-red-500 text-center py-12">
+            {error}
+          </p>
         )}
 
         {/* Table */}
         {!loading && !error && (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-[13%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[10%]" />
+                </colgroup>
+
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    {["Order Number", "Customer", "Location", "Total", "Items", "Discount", "Date", "Actions"].map((h) => (
+                  <tr className="border-b border-gray-100 bg-indigo-50/40">
+                    {[
+                      "Order Number",
+                      "Customer",
+                      "Location",
+                      "Total",
+                      "Items",
+                      "Discount",
+                      "Date",
+                      "Actions",
+                    ].map((heading) => (
                       <th
-                        key={h}
-                        className="px-6 py-4 text-left text-xs font-normal text-gray-400 uppercase tracking-wider"
+                        key={heading}
+                        className="px-4 py-3 text-left text-xs font-normal text-indigo-400/80 uppercase tracking-wider"
                       >
-                        {h}
+                        {heading}
                       </th>
                     ))}
                   </tr>
@@ -76,76 +127,106 @@ export const AdminOrdersPage: React.FC = () => {
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-12 text-sm font-normal text-gray-400">
+                      <td
+                        colSpan={8}
+                        className="text-center py-12 text-sm font-normal text-gray-400"
+                      >
                         No orders found
                       </td>
                     </tr>
                   ) : (
                     filtered.map((order, index) => {
                       const totalItems = order.orderDetails.reduce(
-                        (sum, d) => sum + d.qty, 0
+                        (sum, detail) => sum + detail.qty,
+                        0
                       );
 
                       return (
                         <tr
                           key={order.id}
-                          className={`hover:bg-gray-50 transition-colors duration-150 ${
-                            index !== filtered.length - 1 ? "border-b border-gray-100" : ""
+                          onClick={() => handleViewOrder(order.id)}
+                          className={`cursor-pointer hover:bg-indigo-50/30 transition-colors duration-150 ${
+                            index !== filtered.length - 1
+                              ? "border-b border-gray-100"
+                              : ""
                           }`}
                         >
                           {/* Order Number */}
-                          <td className="px-6 py-4">
-                            <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-normal rounded-lg">
-                              ORD-{String(order.id).padStart(3, "0")}
+                          <td className="px-4 py-3">
+                            <span className="px-2.5 py-1 bg-indigo-50 text-indigo-600 text-xs font-medium rounded-lg">
+                              ORD-{String(order.orderNumber).padStart(3, "0")}
                             </span>
                           </td>
 
                           {/* Customer */}
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-3">
                             <div>
-                              <p className="text-sm font-semibold text-gray-800">
-                                {order.customers.firstName} {order.customers.lastName}
-                                
-                              </p>
-                              <p className="text-xs font-normal text-gray-400 mt-0.5">
-                                
-                                {order.customers.email}
-                              </p>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleViewOrder(order.id);
+                                }}
+                                className="text-left"
+                              >
+                                <p className="text-sm font-semibold text-gray-800 hover:text-indigo-600 transition-colors">
+                                  {order.customers.firstName}{" "}
+                                  {order.customers.lastName}
+                                </p>
+
+                                <p className="text-xs font-normal text-gray-400 mt-0.5 truncate">
+                                  {order.customers.email}
+                                </p>
+                              </button>
                             </div>
                           </td>
 
                           {/* Location */}
-                          <td className="px-6 py-4 text-sm font-normal text-gray-500 capitalize">
-                            <Badge className="bg-red-50 text-red-500">{order.location}</Badge>
+                          <td className="px-4 py-3 text-sm font-normal text-gray-500 capitalize">
+                            <Badge className="bg-red-50 text-red-500">
+                              {order.location}
+                            </Badge>
                           </td>
 
                           {/* Total */}
-                          <td className="px-6 py-4 text-sm font-semibold text-gray-800">
-                            <Badge className="bg-green-50 text-green-500">${Number(order.total).toLocaleString()}</Badge>
+                          <td className="px-4 py-3 text-sm font-semibold text-gray-800">
+                            <Badge className="bg-green-50 text-green-500">
+                              ${Number(order.total).toFixed(2)}
+                            </Badge>
                           </td>
 
                           {/* Items */}
-                          <td className="px-6 py-4 text-sm font-normal text-gray-500">
-                            <Badge className="bg-blue-50 text-blue-500">{totalItems} {totalItems === 1 ? "item" : "items"}</Badge>
+                          <td className="px-4 py-3 text-sm font-normal text-gray-500">
+                            <Badge className="bg-blue-50 text-blue-500">
+                              {totalItems}{" "}
+                              {totalItems === 1 ? "item" : "items"}
+                            </Badge>
                           </td>
 
                           {/* Discount */}
-                          <td className="px-6 py-4 text-sm font-normal text-gray-500">
-                            <Badge className="bg-red-50 text-red-500">{order.discount}%</Badge>
+                          <td className="px-4 py-3 text-sm font-normal text-gray-500">
+                            <Badge className="bg-orange-50 text-orange-500">
+                              -${Number(order.discount).toFixed(2)}
+                            </Badge>
                           </td>
 
                           {/* Date */}
-                          <td className="px-6 py-4 text-sm font-normal text-gray-500">
-                            {new Date(order.orderDate).toLocaleDateString()}
+                          <td className="px-4 py-3 text-sm font-normal text-gray-500">
+                            {new Date(
+                              order.orderDate
+                            ).toLocaleDateString()}
                           </td>
 
                           {/* Actions */}
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-3">
                             <button
-                              onClick={() => handleDownload(order.id)}
-                              className="p-2 rounded-lg border border-gray-200 text-black-400
-                                hover:border-blue-200 hover:text-blue-400
-                                transition-colors duration-150"
+                              type="button"
+                              title="Download invoice"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleDownload(order.id);
+                              }}
+                              className="p-2 rounded-lg border border-gray-200 text-gray-400 hover:border-blue-200 hover:text-blue-500 hover:bg-blue-50 transition-colors duration-150"
                             >
                               <Download className="h-4 w-4" />
                             </button>
@@ -160,6 +241,385 @@ export const AdminOrdersPage: React.FC = () => {
           </div>
         )}
 
+        {/* Order Invoice Modal */}
+        {selectedOrder && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={handleCloseModal}
+          >
+            <div
+              className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <FileText
+                      size={21}
+                      className="text-indigo-500"
+                    />
+
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Order Invoice
+                    </h2>
+                  </div>
+
+                  <p className="mt-1 text-sm text-gray-400">
+                    Order details and customer information
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDownload(selectedOrder.id)
+                    }
+                    className="flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-100 transition"
+                  >
+                    <Download size={16} />
+                    Download
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="max-h-[calc(90vh-90px)] overflow-y-auto p-6">
+                {/* Order Information */}
+                <div className="mb-6 rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+                    {/* Order Number */}
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">
+                        Order Number
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold text-indigo-600">
+                        ORD-
+                        {String(
+                          selectedOrder.orderNumber
+                        ).padStart(3, "0")}
+                      </p>
+                    </div>
+
+                    {/* Order ID */}
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">
+                        Order ID
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold text-gray-800">
+                        #{selectedOrder.id}
+                      </p>
+                    </div>
+
+                    {/* Date */}
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">
+                        Order Date
+                      </p>
+
+                      <div className="mt-1 flex items-center gap-2">
+                        <Calendar
+                          size={15}
+                          className="text-amber-400"
+                        />
+
+                        <p className="text-sm font-medium text-gray-700">
+                          {selectedOrder.orderDate
+                            ? new Date(
+                                selectedOrder.orderDate
+                              ).toLocaleDateString()
+                            : "N/A"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Location */}
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">
+                        Location
+                      </p>
+
+                      <div className="mt-1 flex items-center gap-2">
+                        <MapPin
+                          size={15}
+                          className="text-rose-400"
+                        />
+
+                        <p className="text-sm font-medium text-gray-700 truncate">
+                          {selectedOrder.location || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="mb-6">
+                  <div className="mb-4 flex items-center gap-2">
+                    <User
+                      size={20}
+                      className="text-indigo-500"
+                    />
+
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Customer Information
+                    </h3>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 bg-white p-5">
+                    <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
+                          <User
+                            size={26}
+                            className="text-indigo-400"
+                          />
+                        </div>
+
+                        <div>
+                          <h4 className="text-base font-semibold text-gray-800">
+                            {selectedOrder.customers.firstName}{" "}
+                            {selectedOrder.customers.lastName}
+                          </h4>
+
+                          <p className="mt-1 text-xs text-gray-400">
+                            Customer #
+                            {selectedOrder.customerId}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Mail
+                            size={16}
+                            className="text-indigo-400"
+                          />
+
+                          {selectedOrder.customers.email}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Phone
+                            size={16}
+                            className="text-emerald-400"
+                          />
+
+                          {selectedOrder.customers.phone
+                            ? `0${selectedOrder.customers.phone}`
+                            : "N/A"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div className="mb-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Package
+                        size={20}
+                        className="text-indigo-500"
+                      />
+
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Order Items
+                      </h3>
+                    </div>
+
+                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-500">
+                      {selectedOrder.orderDetails.length}{" "}
+                      {selectedOrder.orderDetails.length === 1
+                        ? "item"
+                        : "items"}
+                    </span>
+                  </div>
+
+                  <div className="overflow-hidden rounded-2xl border border-gray-100">
+                    <div className="hidden border-b border-gray-100 bg-indigo-50/40 px-5 py-3 md:grid md:grid-cols-12">
+                      <div className="col-span-5 text-xs font-medium uppercase tracking-wide text-indigo-400/80">
+                        Product
+                      </div>
+
+                      <div className="col-span-2 text-center text-xs font-medium uppercase tracking-wide text-indigo-400/80">
+                        Price
+                      </div>
+
+                      <div className="col-span-2 text-center text-xs font-medium uppercase tracking-wide text-indigo-400/80">
+                        Qty
+                      </div>
+
+                      <div className="col-span-3 text-right text-xs font-medium uppercase tracking-wide text-indigo-400/80">
+                        Amount
+                      </div>
+                    </div>
+
+                    <div className="divide-y divide-gray-100">
+                      {selectedOrder.orderDetails.map(
+                        (detail, index) => (
+                          <div
+                            key={
+                              detail.id ??
+                              `${detail.orderId}-${detail.productId}-${index}`
+                            }
+                            className="px-5 py-4"
+                          >
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
+                              {/* Product */}
+                              <div className="md:col-span-5">
+                                <p className="text-sm font-semibold text-gray-800">
+                                  {detail.productName}
+                                </p>
+
+                                <p className="mt-1 text-xs text-gray-400">
+                                  Product ID: {detail.productId}
+                                </p>
+
+                                {Number(
+                                  detail.discountPercent
+                                ) > 0 && (
+                                  <span className="mt-2 inline-flex rounded-full bg-green-50 px-2 py-1 text-xs text-green-600">
+                                    {Number(
+                                      detail.discountPercent
+                                    ).toFixed(0)}
+                                    % discount
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Price */}
+                              <div className="md:col-span-2 md:text-center">
+                                <p className="text-xs text-gray-400 md:hidden">
+                                  Price
+                                </p>
+
+                                <p className="text-sm text-gray-600">
+                                  $
+                                  {Number(
+                                    detail.productPrice
+                                  ).toFixed(2)}
+                                </p>
+
+                                {Number(
+                                  detail.originalPrice
+                                ) >
+                                  Number(
+                                    detail.productPrice
+                                  ) && (
+                                  <p className="text-xs text-gray-400 line-through">
+                                    $
+                                    {Number(
+                                      detail.originalPrice
+                                    ).toFixed(2)}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Quantity */}
+                              <div className="md:col-span-2 md:text-center">
+                                <p className="text-xs text-gray-400 md:hidden">
+                                  Quantity
+                                </p>
+
+                                <p className="text-sm font-medium text-gray-700">
+                                  {detail.qty}
+                                </p>
+                              </div>
+
+                              {/* Amount */}
+                              <div className="md:col-span-3 md:text-right">
+                                <p className="text-xs text-gray-400 md:hidden">
+                                  Amount
+                                </p>
+
+                                <p className="text-sm font-semibold text-gray-800">
+                                  $
+                                  {Number(
+                                    detail.amount
+                                  ).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Invoice Summary */}
+                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                  <div className="ml-auto max-w-sm space-y-3">
+                    {/* Subtotal */}
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Subtotal</span>
+
+                      <span>
+                        $
+                        {selectedOrder.orderDetails
+                          .reduce(
+                            (sum, detail) =>
+                              sum + Number(detail.amount),
+                            0
+                          )
+                          .toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Discount */}
+                    <div className="flex justify-between text-sm text-red-500">
+                      <span>Discount</span>
+
+                      <span>
+                        -$
+                        {Number(
+                          selectedOrder.discount
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-200 pt-3">
+                      <div className="flex justify-between text-lg font-semibold text-indigo-600">
+                        <span>Total</span>
+
+                        <span>
+                          $
+                          {Number(
+                            selectedOrder.total
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-5 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

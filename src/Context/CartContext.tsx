@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 import type { Product } from '@/types/Product';
 import { useAuth } from './AuthContext'; // 👈 adjust path to wherever your AuthContext lives
 
@@ -33,33 +34,77 @@ function loadCart(key: string): CartItem[] {
   }
 }
 
+function mergeCarts(userItems: CartItem[], guestItems: CartItem[]): CartItem[] {
+  const merged = [...userItems];
+
+  guestItems.forEach((guestItem) => {
+    const existing = merged.find((i) => i.product.id === guestItem.product.id);
+    if (existing) {
+      existing.quantity += guestItem.quantity;
+    } else {
+      merged.push(guestItem);
+    }
+  });
+
+  return merged;
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth(); // 👈 now cart knows who's logged in
+  const { user } = useAuth(); // 👈 cart knows who's logged in
   const cartKey = getCartKey(user?.id);
 
   const [items, setItems] = useState<CartItem[]>(() => loadCart(cartKey));
 
   // Whenever the logged-in user changes (login/logout/switch account),
-  // reload the cart that belongs to THAT user
+  // load the correct cart AND merge in any leftover guest cart on login.
   useEffect(() => {
-    setItems(loadCart(cartKey));
-  }, [cartKey]);
+    if (user) {
+      // Logged in: check for a leftover guest cart and merge it in
+      const guestKey = getCartKey(undefined);
+      const guestItems = loadCart(guestKey);
+      const userItems = loadCart(cartKey);
 
-  // Persist to localStorage under the current user's key only
+      if (guestItems.length > 0) {
+        const merged = mergeCarts(userItems, guestItems);
+        setItems(merged);
+        localStorage.setItem(cartKey, JSON.stringify(merged));
+        localStorage.removeItem(guestKey); // clear guest cart once merged in
+      } else {
+        setItems(userItems);
+      }
+    } else {
+      // Logged out / guest: just load the guest cart
+      setItems(loadCart(cartKey));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey, user]);
+
+  // Persist to localStorage under the current cart's key only
   useEffect(() => {
     localStorage.setItem(cartKey, JSON.stringify(items));
   }, [items, cartKey]);
 
   const addToCart = useCallback((product: Product) => {
+    if (product.qty <= 0) {
+      toast.error('This product is out of stock.');
+      return;
+    }
+
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
+
       if (existing) {
+        if (existing.quantity + 1 > product.qty) {
+          toast.error(`Only ${product.qty} in stock. You already have ${existing.quantity} in your cart.`);
+          return prev;
+        }
         return prev.map((i) =>
           i.product.id === product.id
             ? { ...i, quantity: i.quantity + 1 }
             : i
         );
       }
+
       return [...prev, { product, quantity: 1 }];
     });
   }, []);
@@ -71,13 +116,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQty = useCallback((productId: number, quantity: number) => {
     if (quantity <= 0) {
       setItems((prev) => prev.filter((i) => i.product.id !== productId));
-    } else {
-      setItems((prev) =>
-        prev.map((i) =>
-          i.product.id === productId ? { ...i, quantity } : i
-        )
-      );
+      return;
     }
+
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.product.id !== productId) return i;
+
+        if (quantity > i.product.qty) {
+          toast.error(`Only ${i.product.qty} in stock for ${i.product.name}.`);
+          return { ...i, quantity: i.product.qty }; // clamp to max available
+        }
+
+        return { ...i, quantity };
+      })
+    );
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);

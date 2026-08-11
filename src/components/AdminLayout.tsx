@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, ShoppingCart, LogOut, ChartBarStacked,  PackageSearch } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, LogOut, ChartBarStacked,  PackageSearch,  User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/Context/AuthContext';
 // import { useAuth } from '@/context/AuthContext';
@@ -15,7 +15,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { id: 'category',  label: 'Categories', icon: ChartBarStacked,  to: '/admin-category' },
     { id: 'orders',    label: 'Orders',     icon: ShoppingCart,     to: '/admin-order' },
     { id: 'brands',    label: 'Brands',     icon: PackageSearch,     to: '/admin-brands' },
-    {id: 'promotion', label: 'Promotion', icon: Package, to:'/admin-promotion'}
+    {id: 'promotion', label: 'Promotion', icon: Package, to:'/admin-promotion'},
+    {id: 'User Management', label: 'User Management', icon: User, to:'/user-management'}
   ];
 
   const { logout } = useAuth();

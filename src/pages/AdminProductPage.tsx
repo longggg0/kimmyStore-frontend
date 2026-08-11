@@ -68,7 +68,7 @@ export const AdminProductsPage: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {["ID", "Image", "Name", "Category", "Price", "Stock", "Size", "SkinType", "Description", "Actions"].map((h) => (
+                  {["ID", "Image", "Name", "Category", "Brand", "Price", "Stock", "Size", "SkinType", "Description", "Actions"].map((h) => (
                     <th key={h} className="px-6 py-4 text-left text-xs text-gray-400 uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -78,15 +78,15 @@ export const AdminProductsPage: React.FC = () => {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={10} className="text-center py-12 text-sm text-gray-400">Loading...</td>
+                    <td colSpan={11} className="text-center py-12 text-sm text-gray-400">Loading...</td>
                   </tr>
                 ) : isError ? (
                   <tr>
-                    <td colSpan={10} className="text-center py-12 text-sm text-red-400">Failed to load products.</td>
+                    <td colSpan={11} className="text-center py-12 text-sm text-red-400">Failed to load products.</td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="text-center py-12 text-sm text-gray-400">No products found.</td>
+                    <td colSpan={11} className="text-center py-12 text-sm text-gray-400">No products found.</td>
                   </tr>
                 ) : (
                   filtered.map((product, index) => {
@@ -120,6 +120,10 @@ export const AdminProductsPage: React.FC = () => {
                           <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg whitespace-nowrap">
                             {product.category?.name || "N/A"}
                           </span>
+                        </td>
+
+                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                          {product.brand?.name || "N/A"}
                         </td>
 
                         <td className="px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap">
