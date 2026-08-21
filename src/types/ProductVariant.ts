@@ -15,7 +15,7 @@ export interface ProductVariantResponse {
   message: string;
   data: ProductVariant[];
 }
-
+  
 export interface SingleProductVariantResponse {
   message: string;
   data: ProductVariant;

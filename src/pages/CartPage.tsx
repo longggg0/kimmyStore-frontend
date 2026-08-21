@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Trash2, ShoppingBag, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -5,6 +6,8 @@ import { useCart } from '@/Context/CartContext';
 import { useAuth } from '@/Context/AuthContext';
 import { useLanguage } from '../Context/LanguageContext';
 import { useDiscountMap } from '@/hook/usePromotion';
+import AuthModal from './AuthModal';
+// import AuthModal from '@/components/AuthModal';
 
 export default function CartPage() {
   const { items, removeFromCart, updateQty } = useCart();
@@ -12,11 +15,18 @@ export default function CartPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const discountMap = useDiscountMap();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const getItemPrice = (item: (typeof items)[number]) =>
+    item.variant ? parseFloat(item.variant.price) : parseFloat(String(item.product.price));
+
+  const getItemStock = (item: (typeof items)[number]) =>
+    item.variant ? item.variant.qty : item.product.qty;
 
   const subtotal = items.reduce((sum, item) => {
     const discount = discountMap.get(item.product.id);
     const discountPercent = discount?.discountPercent ?? 0;
-    const originalPrice = parseFloat(String(item.product.price));
+    const originalPrice = getItemPrice(item);
     const discountedPrice = discountPercent > 0
       ? originalPrice * (1 - discountPercent / 100)
       : originalPrice;
@@ -24,8 +34,7 @@ export default function CartPage() {
   }, 0);
 
   const originalSubtotal = items.reduce((sum, item) => {
-    const originalPrice = parseFloat(String(item.product.price));
-    return sum + originalPrice * item.quantity;
+    return sum + getItemPrice(item) * item.quantity;
   }, 0);
 
   const discountTotal = originalSubtotal - subtotal;
@@ -35,10 +44,16 @@ export default function CartPage() {
   const handleCheckoutClick = () => {
     if (!isAuthenticated) {
       toast.error('Please log in', {
-        description: 'You need to log in or create an account before proceed to checkout.',
+        description: 'You need to log in or create an account before proceeding to checkout.',
       });
+      setShowAuthModal(true);
       return;
     }
+    navigate('/checkout-page');
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
     navigate('/checkout-page');
   };
 
@@ -75,21 +90,24 @@ export default function CartPage() {
               const discount = discountMap.get(item.product.id);
               const discountPercent = discount?.discountPercent ?? 0;
               const hasDiscount = discountPercent > 0;
-              const originalPrice = parseFloat(String(item.product.price));
+              const originalPrice = getItemPrice(item);
               const discountedPrice = hasDiscount
                 ? originalPrice * (1 - discountPercent / 100)
                 : originalPrice;
+              const itemStock = getItemStock(item);
+              const itemImage = item.variant?.imageUrl
+                || `https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${item.product.id}/download`;
 
               return (
                 <div
-                  key={item.product.id}
+                  key={`${item.product.id}-${item.variant?.id ?? 'base'}`}
                   className="bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100"
                 >
 
                   <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 md:p-6">
                     <div className="relative overflow-hidden rounded-xl flex-shrink-0">
                       <img
-                        src={`https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${item.product.id}/download`}
+                        src={itemImage}
                         alt={item.product.name}
                         className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 object-cover"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -110,6 +128,17 @@ export default function CartPage() {
                           <h3 className="text-sm sm:text-base md:text-lg mb-1 line-clamp-1" style={{ color: '#333333' }}>
                             {item.product.name}
                           </h3>
+                          {item.variant && (
+                            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                              {item.variant.colorHex && (
+                                <span
+                                  className="w-3 h-3 rounded-full border border-gray-200 inline-block"
+                                  style={{ backgroundColor: item.variant.colorHex }}
+                                />
+                              )}
+                              <span>{item.variant.color} · {item.variant.size}</span>
+                            </div>
+                          )}
                           <div className="flex items-baseline gap-2 mt-1 sm:mt-2">
                             <span className="text-base sm:text-lg text-black">
                               ${discountedPrice.toFixed(2)}
@@ -122,7 +151,7 @@ export default function CartPage() {
                           </div>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(item.product.id, item.variant?.id)}
                           className="p-2 sm:p-2.5 h-fit rounded-full hover:bg-red-50 text-red-500 transition-all duration-300 flex-shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -132,15 +161,15 @@ export default function CartPage() {
                       <div className="flex items-center justify-between mt-2 sm:mt-4 gap-2">
                         <div className="flex items-center gap-2 sm:gap-3 bg-gray-50 rounded-full px-2 py-1 flex-shrink-0">
                           <button
-                            onClick={() => updateQty(item.product.id, item.quantity - 1)}
+                            onClick={() => updateQty(item.product.id, item.quantity - 1, item.variant?.id)}
                             className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="w-6 sm:w-8 text-center text-sm sm:text-base">{item.quantity}</span>
                           <button
-                            onClick={() => updateQty(item.product.id, item.quantity + 1)}
-                            disabled={item.quantity >= item.product.qty}
+                            onClick={() => updateQty(item.product.id, item.quantity + 1, item.variant?.id)}
+                            disabled={item.quantity >= itemStock}
                             className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <Plus className="w-4 h-4" />
@@ -166,21 +195,19 @@ export default function CartPage() {
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-5">{t('cart.orderSummary')}</h2>
 
               <div className="space-y-3 mb-5">
-
-
                 {items.map((item) => {
-                  const originalPrice = parseFloat(String(item.product.price));
+                  const originalPrice = getItemPrice(item);
 
                   return (
-                    <div key={item.product.id} className="flex justify-between text-sm text-gray-600">
+                    <div key={`${item.product.id}-${item.variant?.id ?? 'base'}`} className="flex justify-between text-sm text-gray-600">
                       <span className="line-clamp-1 pr-2">
-                        {item.product.name} × {item.quantity}
+                        {item.product.name}
+                        {item.variant ? ` (${item.variant.color}, ${item.variant.size})` : ''} × {item.quantity}
                       </span>
                       <span className="flex-shrink-0">${(originalPrice * item.quantity).toFixed(2)}</span>
                     </div>
                   );
                 })}
-
 
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>{t('cart.subtotal')}</span>
@@ -215,6 +242,13 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
     </div>
   );
 }

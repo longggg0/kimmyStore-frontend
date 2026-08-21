@@ -8,6 +8,7 @@ import {
 import { useOrder } from "@/hook/useOrder";
 import { useProducts } from "@/hook/useProduct";
 import { useCustomers } from "@/hook/useCustomers";
+import { Link } from "react-router-dom";
 
 const ACCENT = "#4f46e5";
 const NEUTRAL_CHART = "#9ca3af";
@@ -223,10 +224,14 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* ── Stat Cards ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Products" icon={Package} value={products.length} staticSub="In catalog" accent="#4f46e5" />
 
-          <StatCard
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <Link to={"/admin-product"}>
+                  <StatCard title="Total Products" icon={Package} value={products.length} staticSub="In catalog" accent="#4f46e5" />
+        </Link>
+        <Link to={"/admin-order"}>
+        <StatCard
             title="Total Orders"
             icon={ShoppingCart}
             value={orders.length}
@@ -242,8 +247,10 @@ export const AdminDashboardPage: React.FC = () => {
             }
             staticSub={derived.orderTrendPct === null ? "No orders last month to compare" : undefined}
           />
-
-          <StatCard
+        </Link>
+          
+            <Link to={"/user-management"}>
+            <StatCard
             title="Total Customers"
             icon={User}
             value={customersRaw.length}
@@ -254,6 +261,8 @@ export const AdminDashboardPage: React.FC = () => {
               sub: "new this month",
             }}
           />
+            </Link>
+          
 
           <StatCard
             title="Inventory Value"

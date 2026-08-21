@@ -24,15 +24,38 @@ export default function CheckoutPage() {
   const { t } = useLanguage();
   const discountMap = useDiscountMap();
   const { user } = useAuth();
+  const BASE_URL = import.meta.env.VITE_API_URL;
+
+  const PRODUCT_IMAGE_URL = (id: number) => `${BASE_URL}/api/v3/product/images/${id}/download`;
+
+  // Resolve a variant's imageUrl into a usable <img src>.
+  // Absolute URLs (e.g. Cloudinary) pass through untouched;
+  // relative paths get prefixed with BASE_URL as a safety net.
+  const resolveImageUrl = (url: string | null | undefined) => {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  // Priority: the cart item's own variant image -> the product's base image.
+  const getItemImage = (item: (typeof items)[number]) => {
+    const variantImage = resolveImageUrl(item.variant?.imageUrl);
+    if (variantImage) return variantImage;
+    return PRODUCT_IMAGE_URL(item.product.id);
+  };
+
+  // Helper: variant price takes priority over product price when a variant is selected
+  const getUnitPrice = (item: (typeof items)[number]) =>
+    item.variant ? parseFloat(item.variant.price) : parseFloat(String(item.product.price));
 
   const originalSubtotal = items.reduce((sum, item) => {
-    return sum + parseFloat(String(item.product.price)) * item.quantity;
+    return sum + getUnitPrice(item) * item.quantity;
   }, 0);
 
   const discountedSubtotal = items.reduce((sum, item) => {
     const discount = discountMap.get(item.product.id);
     const discountPercent = discount?.discountPercent ?? 0;
-    const originalPrice = parseFloat(String(item.product.price));
+    const originalPrice = getUnitPrice(item);
     const discountedPrice = discountPercent > 0
       ? originalPrice * (1 - discountPercent / 100)
       : originalPrice;
@@ -59,6 +82,7 @@ export default function CheckoutPage() {
         location: address,
         items: items.map((item) => ({
           productId: item.product.id,
+          ...(item.variant?.id ? { variantId: item.variant.id } : {}),
           qty: item.quantity,
         })),
       };
@@ -66,12 +90,16 @@ export default function CheckoutPage() {
       const res = await orderService.create(payload);
       const orderId = res.data.id;
 
+      // Order is confirmed at this point — clear the cart regardless of
+      // which payment method the user takes next.
+      clearCart();
+
       if (paymentMethod === 'bank-transfer') {
         const paymentRes = await createPayment(orderId);
 
         if (paymentRes.data) {
           const payway = paymentRes.data.payway;
-          
+
 
           const form = document.getElementById('aba_merchant_request') as HTMLFormElement;
           if (!form) return;
@@ -83,60 +111,60 @@ export default function CheckoutPage() {
           form.target = payway.target;
 
           // populate fields
-          // populate fields
-Object.entries(payway.fields).forEach(([key, value]) => {
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = key;
-  input.value = String(value);
-  form.appendChild(input);
-});
+          Object.entries(payway.fields).forEach(([key, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = String(value);
+            form.appendChild(input);
+          });
 
-// Save order information for Telegram
-const telegramOrder = {
-  customer: {
-    fullName,
-    email,
-    phone,
-    address,
-  },
+          // Save order information for Telegram
+          const telegramOrder = {
+            customer: {
+              fullName,
+              email,
+              phone,
+              address,
+            },
 
-  products: items.map((item) => {
-    const discount = discountMap.get(item.product.id);
-    const discountPercent = discount?.discountPercent ?? 0;
+            products: items.map((item) => {
+              const discount = discountMap.get(item.product.id);
+              const discountPercent = discount?.discountPercent ?? 0;
 
-    const originalPrice = Number(item.product.price);
+              const originalPrice = getUnitPrice(item);
 
-    const finalPrice =
-      discountPercent > 0
-        ? originalPrice * (1 - discountPercent / 100)
-        : originalPrice;
+              const finalPrice =
+                discountPercent > 0
+                  ? originalPrice * (1 - discountPercent / 100)
+                  : originalPrice;
 
-    return {
-      name: item.product.name,
-      quantity: item.quantity,
-      price: finalPrice,
-      subtotal: finalPrice * item.quantity,
-    };
-  }),
+              return {
+                name: item.product.name,
+                variant: item.variant
+                  ? `${item.variant.color}/${item.variant.size}`
+                  : null,
+                sku: item.variant?.sku ?? null,
+                quantity: item.quantity,
+                price: finalPrice,
+                subtotal: finalPrice * item.quantity,
+              };
+            }),
 
-  originalTotal: originalSubtotal,
-  discount: discountAmount,
-  total: discountedSubtotal,
-};
+            originalTotal: originalSubtotal,
+            discount: discountAmount,
+            total: discountedSubtotal,
+          };
 
-sessionStorage.setItem(
-  "pendingTelegramOrder",
-  JSON.stringify(telegramOrder)
-);
-
-// AbaPayway?.checkout();
+          sessionStorage.setItem(
+            "pendingTelegramOrder",
+            JSON.stringify(telegramOrder)
+          );
 
           AbaPayway?.checkout();
 
         }
       } else {
-        clearCart();
         navigate('/order-history');
       }
     } catch (err) {
@@ -191,12 +219,6 @@ sessionStorage.setItem(
             <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100">
               <h2 className="text-lg sm:text-xl text-gray-900 mb-4 sm:mb-6">{t('checkout.paymentMethod')}</h2>
               <div className="space-y-3">
-                  {/* <label className="flex items-center gap-3 p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-400 transition-all duration-300">
-                    <input type="radio" name="payment" value="delivery" checked={paymentMethod === 'delivery'}
-                      onChange={(e) => setPaymentMethod(e.target.value)} className="text-pink-400 focus:ring-pink-400 flex-shrink-0" />
-                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 flex-shrink-0" />
-                    <span className="flex-1 text-sm sm:text-base">{t('checkout.cashOnDelivery')}</span>
-                  </label> */}
                 <label className="flex items-center gap-3 p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-400 transition-all duration-300">
                   <input type="radio" name="payment" value="bank-transfer" checked={paymentMethod === 'bank-transfer'}
                     onChange={(e) => setPaymentMethod(e.target.value)} className="text-pink-400 focus:ring-pink-400 flex-shrink-0" />
@@ -227,17 +249,43 @@ sessionStorage.setItem(
                   const discount = discountMap.get(item.product.id);
                   const discountPercent = discount?.discountPercent ?? 0;
                   const hasDiscount = discountPercent > 0;
-                  const originalPrice = parseFloat(String(item.product.price));
-                  const discountedPrice = hasDiscount ? originalPrice * (1 - discountPercent / 100) : originalPrice;
+
+                  const originalPrice = getUnitPrice(item);
+                  const discountedPrice = hasDiscount
+                    ? originalPrice * (1 - discountPercent / 100)
+                    : originalPrice;
+
                   return (
-                    <div key={item.product.id} className="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div
+                      key={`${item.product.id}-${item.variant?.id ?? 'base'}`}
+                      className="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                    >
                       <div className="overflow-hidden rounded-lg flex-shrink-0">
-                        <img src={`https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${item.product.id}/download`}
-                          alt={item.product.name} className="w-14 h-14 sm:w-16 sm:h-16 object-cover"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        <img
+                          key={getItemImage(item)}
+                          src={getItemImage(item)}
+                          alt={item.product.name}
+                          className="w-14 h-14 sm:w-16 sm:h-16 object-cover"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm line-clamp-2 mb-1" style={{ color: '#333333' }}>{item.product.name}</p>
+
+                        {item.variant && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {item.variant.colorHex && (
+                              <span
+                                className="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
+                                style={{ backgroundColor: item.variant.colorHex }}
+                              />
+                            )}
+                            <span className="text-xs text-gray-500">
+                              {item.variant.color} / {item.variant.size}
+                            </span>
+                          </div>
+                        )}
+
                         <p className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
                           {item.quantity} × ${discountedPrice.toFixed(2)}
                           {hasDiscount && <span className="line-through text-gray-400 ml-1">${originalPrice.toFixed(2)}</span>}

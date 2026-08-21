@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "../components/AdminLayout";
 import {
   Download,
@@ -10,14 +10,19 @@ import {
   Mail,
   Phone,
   FileText,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useOrder } from "@/hook/useOrder";
 import { orderService } from "@/services/order.service";
 import { Badge } from "@/components/ui/badge";
 
+const ORDERS_PER_PAGE = 20;
+
 export const AdminOrdersPage: React.FC = () => {
   const [search] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { orders, loading, error } = useOrder();
 
@@ -37,27 +42,87 @@ export const AdminOrdersPage: React.FC = () => {
     setSelectedOrderId(null);
   };
 
-  const filtered = orders.filter((order) => {
-    const fullName =
-      `${order.customers.firstName} ${order.customers.lastName}`.toLowerCase();
+  const filtered = useMemo(() => {
+    return orders.filter((order) => {
+      const fullName =
+        `${order.customers.firstName} ${order.customers.lastName}`.toLowerCase();
 
-    const username =
-      order.customers.username?.toLowerCase() ?? "";
+      const username = order.customers.username?.toLowerCase() ?? "";
 
-    const orderNum = String(order.orderNumber).toLowerCase();
+      const orderNum = String(order.orderNumber).toLowerCase();
 
-    const query = search.toLowerCase();
+      const query = search.toLowerCase();
 
-    return (
-      fullName.includes(query) ||
-      username.includes(query) ||
-      orderNum.includes(query)
-    );
-  });
+      return (
+        fullName.includes(query) ||
+        username.includes(query) ||
+        orderNum.includes(query)
+      );
+    });
+  }, [orders, search]);
 
-  const selectedOrder = orders.find(
-    (order) => order.id === selectedOrderId
-  );
+  // Reset to page 1 whenever the search query (or underlying data) changes,
+  // so the user doesn't get stranded on an out-of-range page.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, orders.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ORDERS_PER_PAGE));
+
+  // Clamp current page if filtering shrinks the results below the current page.
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * ORDERS_PER_PAGE;
+    return filtered.slice(start, start + ORDERS_PER_PAGE);
+  }, [filtered, currentPage]);
+
+  const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * ORDERS_PER_PAGE + 1;
+  const endIndex = Math.min(currentPage * ORDERS_PER_PAGE, filtered.length);
+
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  // Build a compact page number list with ellipses for large page counts.
+  const getPageNumbers = (): (number | "ellipsis")[] => {
+    const pages: (number | "ellipsis")[] = [];
+    const delta = 1;
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    pages.push(1);
+
+    if (currentPage - delta > 2) {
+      pages.push("ellipsis");
+    }
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      pages.push(i);
+    }
+
+    if (currentPage + delta < totalPages - 1) {
+      pages.push("ellipsis");
+    }
+
+    pages.push(totalPages);
+
+    return pages;
+  };
+
+  const selectedOrder = orders.find((order) => order.id === selectedOrderId);
 
   return (
     <AdminLayout>
@@ -125,7 +190,7 @@ export const AdminOrdersPage: React.FC = () => {
                 </thead>
 
                 <tbody>
-                  {filtered.length === 0 ? (
+                  {paginatedOrders.length === 0 ? (
                     <tr>
                       <td
                         colSpan={8}
@@ -135,7 +200,7 @@ export const AdminOrdersPage: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((order, index) => {
+                    paginatedOrders.map((order, index) => {
                       const totalItems = order.orderDetails.reduce(
                         (sum, detail) => sum + detail.qty,
                         0
@@ -146,7 +211,7 @@ export const AdminOrdersPage: React.FC = () => {
                           key={order.id}
                           onClick={() => handleViewOrder(order.id)}
                           className={`cursor-pointer hover:bg-indigo-50/30 transition-colors duration-150 ${
-                            index !== filtered.length - 1
+                            index !== paginatedOrders.length - 1
                               ? "border-b border-gray-100"
                               : ""
                           }`}
@@ -238,6 +303,73 @@ export const AdminOrdersPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {filtered.length > 0 && (
+              <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs font-normal text-gray-400">
+                  Showing{" "}
+                  <span className="font-medium text-gray-600">
+                    {startIndex}
+                  </span>{" "}
+                  -{" "}
+                  <span className="font-medium text-gray-600">
+                    {endIndex}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-gray-600">
+                    {filtered.length}
+                  </span>{" "}
+                  orders
+                </p>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 text-gray-400 hover:border-indigo-200 hover:text-indigo-500 hover:bg-indigo-50 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-400 disabled:hover:bg-transparent"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  {getPageNumbers().map((page, idx) =>
+                    page === "ellipsis" ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="flex items-center justify-center h-8 w-8 text-xs text-gray-400"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => goToPage(page)}
+                        className={`flex items-center justify-center h-8 w-8 rounded-lg text-xs font-medium transition-colors duration-150 ${
+                          page === currentPage
+                            ? "bg-indigo-500 text-white"
+                            : "border border-gray-200 text-gray-500 hover:border-indigo-200 hover:text-indigo-500 hover:bg-indigo-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 text-gray-400 hover:border-indigo-200 hover:text-indigo-500 hover:bg-indigo-50 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-400 disabled:hover:bg-transparent"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

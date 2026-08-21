@@ -10,7 +10,7 @@ export default function WishlistPage() {
   const { addToCart } = useCart();
   const { t } = useLanguage();
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
-
+const BASE_URL = import.meta.env.VITE_API_URL ;
   const handleAddToCart = (productId: number) => {
     const item = items.find((p) => p.id === productId);
     if (!item) return;
@@ -57,7 +57,7 @@ export default function WishlistPage() {
             <div key={product.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 flex flex-col">
               <div className="relative overflow-hidden aspect-[3/4]">
                 <img
-                  src={`https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${product.id}/download`}
+                  src={`${BASE_URL}/api/v3/product/images/${product.id}/download`}
                   alt={product.name}
                   className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}

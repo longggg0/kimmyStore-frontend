@@ -1,14 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Star, Heart, ShoppingCart, ArrowLeft, Share2, Check } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useProductById } from '@/hook/useProduct';
+import { useProductVariants } from '@/hook/useProductVariant';
 import { useCart } from '@/Context/CartContext';
 import { useWishlist } from '@/Context/WishlistContext';
 import { useLanguage } from '../Context/LanguageContext';
 import { useDiscountMap } from '@/hook/usePromotion';
 
-const IMAGE_URL = (id: number) => `https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${id}/download`;
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+const IMAGE_URL = (id: number) => `${BASE_URL}/api/v3/product/images/${id}/download`;
+
+// Resolve a variant's imageUrl into a usable <img src>.
+// Absolute URLs (e.g. Cloudinary) pass through untouched;
+// relative paths get prefixed with BASE_URL as a safety net.
+const resolveImageUrl = (url: string | null | undefined) => {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+};
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,28 +29,109 @@ export default function ProductDetailPage() {
   const { data, isLoading, isError } = useProductById(Number(id));
   const product = data?.data;
 
+  const { data: variantData } = useProductVariants(Number(id));
+  const variants = useMemo(() => variantData?.data ?? [], [variantData]);
+  const hasVariants = variants.length > 0;
+
   const { addToCart, items } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const discountMap = useDiscountMap();
 
   const [quantity, setQuantity] = useState(1);
-  const [quantityInput, setQuantityInput] = useState('1'); // raw text while typing
+  const [quantityInput, setQuantityInput] = useState('1');
   const [added, setAdded] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (variants.length > 0 && !selectedColor) {
+      setSelectedColor(variants[0].color);
+      setSelectedSize(variants[0].size);
+    }
+  }, [variants, selectedColor]);
+
+  const colors = useMemo(() => {
+    const map = new Map<string, string | null>();
+    variants.forEach((v) => {
+      if (!map.has(v.color)) map.set(v.color, v.colorHex);
+    });
+    return Array.from(map.entries()).map(([color, colorHex]) => ({ color, colorHex }));
+  }, [variants]);
+
+  // ALL unique sizes across every color, so the full size range is always visible
+  const allSizes = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    variants.forEach((v) => {
+      if (!seen.has(v.size)) {
+        seen.add(v.size);
+        result.push(v.size);
+      }
+    });
+    return result;
+  }, [variants]);
+
+  const selectedVariant = useMemo(() => {
+    return variants.find((v) => v.color === selectedColor && v.size === selectedSize) ?? null;
+  }, [variants, selectedColor, selectedSize]);
+
+  const handleSelectColor = (color: string) => {
+    setSelectedColor(color);
+    // keep the currently selected size even if unavailable for this color —
+    // the button will just show disabled/greyed instead of forcing a reset
+    setQuantity(1);
+    setQuantityInput('1');
+  };
+
+  const handleSelectSize = (size: string) => {
+    setSelectedSize(size);
+    setQuantity(1);
+    setQuantityInput('1');
+  };
+
   const wishlisted = product ? isWishlisted(product.id) : false;
 
-  // how many of this product are already sitting in the cart
-  const inCartQty = product
-    ? items.find((i) => i.product.id === product.id)?.quantity ?? 0
+  const effectiveQty = product
+    ? (hasVariants ? (selectedVariant?.qty ?? 0) : product.qty)
     : 0;
-  const isOutOfStock = !product || product.qty === 0;
-  const isMaxedOut = !isOutOfStock && inCartQty >= product.qty;
-  const remainingStock = product ? Math.max(0, product.qty - inCartQty) : 0;
+
+  const inCartQty = product
+    ? items.find(
+        (i) => i.product.id === product.id && (i.variant?.id ?? null) === (selectedVariant?.id ?? null)
+      )?.quantity ?? 0
+    : 0;
+
+  const isOutOfStock = !product || effectiveQty === 0;
+  const isMaxedOut = !isOutOfStock && inCartQty >= effectiveQty;
+  const remainingStock = Math.max(0, effectiveQty - inCartQty);
+
+  // Priority: exact selected variant's image -> any variant of the
+  // selected color that has an image -> the base product image.
+  const displayImage = useMemo(() => {
+    if (!product) return '';
+
+    const exact = resolveImageUrl(selectedVariant?.imageUrl);
+    if (exact) return exact;
+
+    const colorFallback = variants.find(
+      (v) => v.color === selectedColor && v.imageUrl
+    );
+    const fallback = resolveImageUrl(colorFallback?.imageUrl);
+    if (fallback) return fallback;
+
+    return IMAGE_URL(product.id);
+  }, [selectedVariant, variants, selectedColor, product]);
 
   const handleAddToCart = () => {
     if (!product) return;
+
+    if (hasVariants && !selectedVariant) {
+      toast.error('Please select a color and size.');
+      return;
+    }
 
     if (isOutOfStock) {
       toast.error('This product is out of stock.');
@@ -46,15 +139,14 @@ export default function ProductDetailPage() {
     }
 
     if (isMaxedOut) {
-      toast.error(`Only ${product.qty} in stock. You already have ${inCartQty} in your cart.`);
+      toast.error(`Only ${effectiveQty} in stock. You already have ${inCartQty} in your cart.`);
       return;
     }
 
-    // clamp in case the selected quantity is more than what's actually left
     const qtyToAdd = Math.min(quantity, remainingStock);
 
     for (let i = 0; i < qtyToAdd; i++) {
-      addToCart(product);
+      addToCart(product, hasVariants ? selectedVariant : null);
     }
 
     if (qtyToAdd < quantity) {
@@ -131,7 +223,9 @@ export default function ProductDetailPage() {
   const discount = discountMap.get(product.id);
   const discountPercent = discount?.discountPercent ?? 0;
   const hasDiscount = discountPercent > 0;
-  const originalPrice = parseFloat(String(product.price));
+  const originalPrice = hasVariants && selectedVariant
+    ? parseFloat(selectedVariant.price)
+    : parseFloat(String(product.price));
   const discountedPrice = hasDiscount
     ? originalPrice * (1 - discountPercent / 100)
     : originalPrice;
@@ -153,7 +247,8 @@ export default function ProductDetailPage() {
           <div className="relative">
             <div className="relative overflow-hidden rounded-2xl bg-gray-100">
               <img
-                src={IMAGE_URL(product.id)}
+                key={displayImage}
+                src={displayImage}
                 alt={product.name}
                 className="w-full h-[300px] sm:h-[450px] md:h-[550px] object-cover"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -196,17 +291,15 @@ export default function ProductDetailPage() {
             <div className="flex items-baseline gap-3 mb-5 sm:mb-6 pb-5 sm:pb-6 border-b border-gray-100">
               <span className="text-3xl sm:text-4xl text-black">${discountedPrice.toFixed(2)}</span>
               {hasDiscount && (
-                <>
-                  <span className="text-lg sm:text-xl text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
-                </>
+                <span className="text-lg sm:text-xl text-gray-400 line-through">${originalPrice.toFixed(2)}</span>
               )}
             </div>
 
             <div className="mb-5">
-              {product.qty > 0 ? (
+              {effectiveQty > 0 ? (
                 <span className="inline-flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1.5 rounded-full text-xs sm:text-sm">
                   <Check className="w-4 h-4" />
-                  {t('detail.inStock')} ({product.qty} left)
+                  {t('detail.inStock')} ({effectiveQty} left)
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2 text-red-500 bg-red-50 px-3 py-1.5 rounded-full text-xs sm:text-sm">
@@ -215,22 +308,80 @@ export default function ProductDetailPage() {
               )}
               {isMaxedOut && (
                 <span className="ml-2 inline-flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full text-xs sm:text-sm">
-                  All {product.qty} already in your cart
+                  All {effectiveQty} already in your cart
                 </span>
               )}
             </div>
 
-            <div className="mb-5">
-              <h3 className="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">{t('detail.size')}</h3>
-              <div className="text-gray-900 text-sm sm:text-base">{product.size}</div>
-            </div>
+            {hasVariants && colors.length > 0 && (
+              <div className="mb-5">
+                <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">
+                  Color{selectedColor ? `: ${selectedColor}` : ''}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map(({ color, colorHex }) => (
+                    <button
+                      key={color}
+                      type="button"
+                      title={color}
+                      onClick={() => handleSelectColor(color)}
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${
+                        selectedColor === color
+                          ? 'border-pink-400 ring-2 ring-pink-200'
+                          : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                      style={{ backgroundColor: colorHex || '#ccc' }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
-           <div className="mb-6">
-  <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.suitableFor')}</h3>
-  <span className="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-xs sm:text-sm border border-pink-100 capitalize">
-    {product.skinType}
-  </span>
-</div>
+            {/* Size selector — shows ALL sizes, disabling ones unavailable for the selected color */}
+            {hasVariants && allSizes.length > 0 ? (
+              <div className="mb-5">
+                <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.size')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {allSizes.map((size) => {
+                    const variantForSize = variants.find(
+                      (v) => v.color === selectedColor && v.size === size
+                    );
+                    const existsForColor = !!variantForSize;
+                    const inStock = (variantForSize?.qty ?? 0) > 0;
+                    const disabled = !existsForColor || !inStock;
+
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => handleSelectSize(size)}
+                        title={!existsForColor ? `${size} not available in ${selectedColor}` : undefined}
+                        className={`px-4 py-2 rounded-lg border text-sm transition-all ${
+                          selectedSize === size
+                            ? 'border-pink-400 bg-pink-50 text-pink-500'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-400'
+                        } ${disabled ? 'opacity-40 cursor-not-allowed line-through' : ''}`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="mb-5">
+                <h3 className="text-xs text-gray-500 mb-1.5 uppercase tracking-wider">{t('detail.size')}</h3>
+                <div className="text-gray-900 text-sm sm:text-base">{product.size}</div>
+              </div>
+            )}
+
+            <div className="mb-6">
+              <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.suitableFor')}</h3>
+              <span className="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-xs sm:text-sm border border-pink-100 capitalize">
+                {product.skinType}
+              </span>
+            </div>
 
             <div className="mb-6">
               <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.quantity')}</h3>
@@ -253,8 +404,6 @@ export default function ProductDetailPage() {
                   value={quantityInput}
                   disabled={isOutOfStock}
                   onChange={(e) => {
-                    // let the user type freely (including empty, "0", partial numbers)
-                    // no clamping here — clamping mid-type would fight the user's typing
                     setQuantityInput(e.target.value);
                   }}
                   onBlur={() => {
@@ -281,7 +430,6 @@ export default function ProductDetailPage() {
                     setQuantityInput(String(parsed));
                   }}
                   onKeyDown={(e) => {
-                    // let Enter behave like blur, so the value confirms immediately
                     if (e.key === 'Enter') e.currentTarget.blur();
                   }}
                   className="text-base sm:text-lg w-14 sm:w-16 text-center border-2 border-gray-200 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

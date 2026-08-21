@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "../components/AdminLayout";
-import { Search, Trash } from "lucide-react";
+import { Search, Trash, ChevronLeft, ChevronRight } from "lucide-react";
 import { AddProductDialog } from "../components/AddProductDialog";
 import { useDeleteProduct, useProducts } from "@/hook/useProduct";
 // import { useCategory } from "@/hook/useCategory";
@@ -12,20 +12,87 @@ import type { Product } from "@/types/Product";
 // instantly, before the real uploaded image URL is available from the server.
 type ProductWithPreview = Product & { imagePreview?: string };
 
+const PRODUCTS_PER_PAGE = 20;
+
 export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [imageBusters, setImageBusters] = useState<Record<number, number>>({});
+  const [currentPage, setCurrentPage] = useState(1);
 
+  const BASE_URL = import.meta.env.VITE_API_URL;
   const { data, isLoading, isError } = useProducts();
   const { data: categories = [] } = useCategory();
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const products = (data?.data ?? []) as ProductWithPreview[];
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    return products.filter((p) =>
+      p.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [products, search]);
+
+  // Reset to page 1 whenever the search query (or underlying data) changes,
+  // so the user doesn't get stranded on an out-of-range page.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, products.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCTS_PER_PAGE));
+
+  // Clamp current page if filtering shrinks the results below the current page.
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return filtered.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filtered, currentPage]);
+
+  const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * PRODUCTS_PER_PAGE + 1;
+  const endIndex = Math.min(currentPage * PRODUCTS_PER_PAGE, filtered.length);
+
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  // Build a compact page number list with ellipses for large page counts.
+  const getPageNumbers = (): (number | "ellipsis")[] => {
+    const pages: (number | "ellipsis")[] = [];
+    const delta = 1;
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    pages.push(1);
+
+    if (currentPage - delta > 2) {
+      pages.push("ellipsis");
+    }
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      pages.push(i);
+    }
+
+    if (currentPage + delta < totalPages - 1) {
+      pages.push("ellipsis");
+    }
+
+    pages.push(totalPages);
+
+    return pages;
+  };
 
   const handleDeleteConfirm = () => {
     if (confirmId === null) return;
@@ -84,18 +151,18 @@ export const AdminProductsPage: React.FC = () => {
                   <tr>
                     <td colSpan={11} className="text-center py-12 text-sm text-red-400">Failed to load products.</td>
                   </tr>
-                ) : filtered.length === 0 ? (
+                ) : paginatedProducts.length === 0 ? (
                   <tr>
                     <td colSpan={11} className="text-center py-12 text-sm text-gray-400">No products found.</td>
                   </tr>
                 ) : (
-                  filtered.map((product, index) => {
+                  paginatedProducts.map((product, index) => {
                     const t = imageBusters[product.id] ?? new Date(product.updatedAt).getTime();
                     return (
                       <tr
                         key={product.id}
                         className={`hover:bg-gray-50 transition-colors ${
-                          index !== filtered.length - 1 ? "border-b border-gray-100" : ""
+                          index !== paginatedProducts.length - 1 ? "border-b border-gray-100" : ""
                         }`}
                       >
                         <td className="px-6 py-4 text-sm text-gray-400">{product.id}</td>
@@ -106,7 +173,7 @@ export const AdminProductsPage: React.FC = () => {
                             src={
                               product.imagePreview
                                 ? product.imagePreview
-                                : `https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${product.id}/download?t=${t}`
+                                : `${BASE_URL}/api/v3/product/images/${product.id}/download?t=${t}`
                             }
                             alt={product.name}
                             className="w-10 h-10 rounded-lg object-cover border border-gray-100"
@@ -164,6 +231,67 @@ export const AdminProductsPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {!isLoading && !isError && filtered.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-normal text-gray-400">
+                Showing{" "}
+                <span className="font-medium text-gray-600">{startIndex}</span>{" "}
+                -{" "}
+                <span className="font-medium text-gray-600">{endIndex}</span>{" "}
+                of{" "}
+                <span className="font-medium text-gray-600">{filtered.length}</span>{" "}
+                products
+              </p>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-400 disabled:hover:bg-transparent"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                {getPageNumbers().map((page, idx) =>
+                  page === "ellipsis" ? (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="flex items-center justify-center h-8 w-8 text-xs text-gray-400"
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => goToPage(page)}
+                      className={`flex items-center justify-center h-8 w-8 rounded-lg text-xs font-medium transition-colors duration-150 ${
+                        page === currentPage
+                          ? "bg-gray-800 text-white"
+                          : "border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-700 hover:bg-gray-50 transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-400 disabled:hover:bg-transparent"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>

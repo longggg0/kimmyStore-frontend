@@ -1,5 +1,5 @@
 import {  Copy, MapPin, Download, Phone, Mail, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLanguage } from '../Context/LanguageContext';
 import { useOrder } from '@/hook/useOrder';
 import { orderService } from '@/services/order.service';
@@ -169,7 +169,16 @@ export default function OrderHistoryPage() {
   const { orders, loading, error, refetch } = useOrder();
   const { user } = useAuth();
 
-  const myOrders = orders.filter((order) => order.customerId === user?.id);
+  // Filter to this customer's orders, then sort so the most recently
+  // placed order shows first (newest -> oldest).
+  const myOrders = useMemo(() => {
+    return orders
+      .filter((order) => order.customerId === user?.id)
+      .sort(
+        (a, b) =>
+          new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+      );
+  }, [orders, user?.id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 py-6 sm:py-8">

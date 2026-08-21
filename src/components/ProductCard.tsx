@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Heart, ShoppingCart, Star, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -6,6 +6,7 @@ import type { Product } from '@/types/Product';
 import { useCart } from '@/Context/CartContext';
 import { useWishlist } from '@/Context/WishlistContext';
 import { useGetActivePromotions } from '@/hook/usePromotion';
+import { useProductVariants } from '@/hook/useProductVariant';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart, items } = useCart();
@@ -13,6 +14,36 @@ export default function ProductCard({ product }: { product: Product }) {
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
   const { data: promotionData } = useGetActivePromotions();
+
+  const { data: variantData } = useProductVariants(product.id);
+  const variants = useMemo(() => variantData?.data ?? [], [variantData]);
+  const hasVariants = variants.length > 0;
+
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (variants.length > 0 && !selectedColor) {
+      setSelectedColor(variants[0].color);
+      setSelectedSize(variants[0].size);
+    }
+  }, [variants, selectedColor]);
+
+  const colors = useMemo(() => {
+    const map = new Map<string, string | null>();
+    variants.forEach((v) => {
+      if (!map.has(v.color)) map.set(v.color, v.colorHex);
+    });
+    return Array.from(map.entries()).map(([color, colorHex]) => ({ color, colorHex }));
+  }, [variants]);
+
+  const sizesForSelectedColor = useMemo(() => {
+    return variants.filter((v) => v.color === selectedColor).map((v) => v.size);
+  }, [variants, selectedColor]);
+
+  const selectedVariant = useMemo(() => {
+    return variants.find((v) => v.color === selectedColor && v.size === selectedSize) ?? null;
+  }, [variants, selectedColor, selectedSize]);
 
   const wishlisted = isWishlisted(product.id);
 
@@ -22,16 +53,40 @@ export default function ProductCard({ product }: { product: Product }) {
   const discountPercent = activePromo?.discountPercent ?? 0;
   const hasDiscount = discountPercent > 0;
 
-  const originalPrice = parseFloat(product.price);
+  const originalPrice = hasVariants && selectedVariant
+    ? parseFloat(selectedVariant.price)
+    : parseFloat(product.price);
   const discountedPrice = originalPrice * (1 - discountPercent / 100);
 
-  // how many of this product are already sitting in the cart
-  const inCartQty = items.find((i) => i.product.id === product.id)?.quantity ?? 0;
-  const isOutOfStock = product.qty === 0;
-  const isMaxedOut = !isOutOfStock && inCartQty >= product.qty;
+  const effectiveQty = hasVariants ? (selectedVariant?.qty ?? 0) : product.qty;
+
+  // count only cart items matching THIS product AND this exact variant
+  const inCartQty = items.find(
+    (i) => i.product.id === product.id && (i.variant?.id ?? null) === (selectedVariant?.id ?? null)
+  )?.quantity ?? 0;
+
+  const isOutOfStock = effectiveQty === 0;
+  const isMaxedOut = !isOutOfStock && inCartQty >= effectiveQty;
+
+  const cardImage = hasVariants && selectedVariant?.imageUrl
+    ? selectedVariant.imageUrl
+    : `https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${product.id}/download`;
+
+  const handleSelectColor = (color: string) => {
+    setSelectedColor(color);
+    const availableSizes = variants.filter((v) => v.color === color).map((v) => v.size);
+    if (selectedSize && !availableSizes.includes(selectedSize)) {
+      setSelectedSize(availableSizes[0] ?? null);
+    }
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    if (hasVariants && !selectedVariant) {
+      toast.error('Please select a color and size.');
+      return;
+    }
 
     if (isOutOfStock) {
       toast.error('This product is out of stock.');
@@ -39,11 +94,11 @@ export default function ProductCard({ product }: { product: Product }) {
     }
 
     if (isMaxedOut) {
-      toast.error(`Only ${product.qty} in stock. You already have ${inCartQty} in your cart.`);
+      toast.error(`Only ${effectiveQty} in stock. You already have ${inCartQty} in your cart.`);
       return;
     }
 
-    addToCart(product);
+    addToCart(product, hasVariants ? selectedVariant : null);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -60,7 +115,7 @@ export default function ProductCard({ product }: { product: Product }) {
     >
       <div className="relative overflow-hidden aspect-[3/4] bg-pink-50">
         <img
-          src={`https://kimmystorebackend-production.up.railway.app/api/v3/product/images/${product.id}/download`}
+          src={cardImage}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -118,6 +173,44 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
+        {hasVariants && colors.length > 0 && (
+          <div className="flex items-center gap-1 mb-1.5 sm:mb-2" onClick={(e) => e.stopPropagation()}>
+            {colors.map(({ color, colorHex }) => (
+              <button
+                key={color}
+                type="button"
+                title={color}
+                onClick={() => handleSelectColor(color)}
+                className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 transition-all ${
+                  selectedColor === color
+                    ? 'border-pink-400 ring-1 ring-pink-200'
+                    : 'border-gray-200 hover:border-gray-400'
+                }`}
+                style={{ backgroundColor: colorHex || '#ccc' }}
+              />
+            ))}
+          </div>
+        )}
+
+        {hasVariants && sizesForSelectedColor.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 mb-1.5 sm:mb-2" onClick={(e) => e.stopPropagation()}>
+            {sizesForSelectedColor.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setSelectedSize(size)}
+                className={`px-1.5 sm:px-2 py-0.5 rounded border text-[9px] sm:text-[10px] transition-all ${
+                  selectedSize === size
+                    ? 'border-pink-400 bg-pink-50 text-pink-500'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center gap-0.5 sm:gap-1 mb-3 sm:mb-4 h-4">
           {[1, 2, 3, 4].map((s) => (
             <Star key={s} className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" />
@@ -126,7 +219,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
 
         <p className="text-[9px] sm:text-[10px] text-gray-400 mb-1.5 sm:mb-2 h-4">
-          {product.qty > 0 ? `${product.qty} in stock` : (
+          {effectiveQty > 0 ? `${effectiveQty} in stock` : (
             <span className="text-red-400">Out of stock</span>
           )}
         </p>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ShoppingCart, Heart, User, LayoutDashboard, LogOut, ClipboardList, Menu, X } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import AuthModal from '@/pages/AuthModal';
 import { useAuth } from '@/hook/useAuth';
 import { useCart } from '@/Context/CartContext';
@@ -40,6 +40,7 @@ export function Header() {
           <div className="flex justify-between items-center h-14 sm:h-16">
 
             {/* Logo */}
+            <Link to={"/"}>
             <div className="flex items-center">
               <img
                 src="/logoJabHouy.png"
@@ -47,6 +48,8 @@ export function Header() {
                 className="w-9 h-9 sm:w-12 sm:h-12 object-contain"
               />
             </div>
+            </Link>
+            
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">

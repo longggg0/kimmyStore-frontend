@@ -1,3 +1,5 @@
+import type { ProductVariant } from "./ProductVariant";
+
 export interface Customer {
   id: number;
   firstName: string;
@@ -14,6 +16,7 @@ export interface OrderDetail {
   id: number;
   orderId: number;
   productId: number;
+  variantId?: number | null;
   productName: string | null;
   productPrice: string | null;
   originalPrice: number | string;
@@ -22,12 +25,13 @@ export interface OrderDetail {
   amount: string;
   createdAt: string;
   updatedAt: string;
+  variant?: ProductVariant | null;
 }
 
 export interface Order {
   id: number;
   customerId: number;
-  orderNumber: number;
+  orderNumber: string;
   total: string;
   discount: string;
   orderDate: string;
@@ -46,8 +50,8 @@ export interface OrderResponse {
 // types/order.ts
 export interface CreateOrderDetailPayload {
   productId: number;
+  variantId?: number;   // ← add this
   qty: number;
-  // remove: productName, productPrice, amount — backend calculates these
 }
 
 export interface CreateOrderPayload {
