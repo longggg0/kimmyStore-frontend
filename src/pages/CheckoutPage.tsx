@@ -8,11 +8,12 @@ import { orderService } from '@/services/order.service';
 import { useAuth } from '@/Context/AuthContext';
 import type { CreateOrderPayload } from '@/types/order';
 import { createPayment } from '@/services/payment.service';
+import { toast } from 'sonner';
 
 declare const AbaPayway: { checkout: () => void } | undefined;
 
 export default function CheckoutPage() {
-  const [paymentMethod, setPaymentMethod] = useState('delivery');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -64,15 +65,27 @@ export default function CheckoutPage() {
 
   const discountAmount = originalSubtotal - discountedSubtotal;
 
-  const handlePlaceOrder = async () => {
-    if (!fullName || !email || !phone || !address) {
-      alert('Please fill in all shipping fields.');
-      return;
-    }
-    if (items.length === 0) {
-      alert('Your cart is empty.');
-      return;
-    }
+const handlePlaceOrder = async () => {
+  const missingFields = !fullName || !email || !phone || !address;
+  const missingPayment = paymentMethod !== 'bank-transfer';
+
+  if (missingFields && missingPayment) {
+    toast.error('Please complete all shipping fields and select Bank Transfer as your payment method.');
+    return;
+  }
+  if (missingFields) {
+    toast.error('Please fill in all shipping fields.');
+    return;
+  }
+  if (missingPayment) {
+    toast.error('Please select Bank Transfer as your payment method before placing your order.');
+    return;
+  }
+
+  if (items.length === 0) {
+    toast.error('Your cart is empty.');
+    return;
+  }
 
     setIsSubmitting(true);
     try {
@@ -99,7 +112,6 @@ export default function CheckoutPage() {
 
         if (paymentRes.data) {
           const payway = paymentRes.data.payway;
-
 
           const form = document.getElementById('aba_merchant_request') as HTMLFormElement;
           if (!form) return;
@@ -162,13 +174,12 @@ export default function CheckoutPage() {
           );
 
           AbaPayway?.checkout();
-
         }
       } else {
         navigate('/order-history');
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to place order.');
+      toast.error(err instanceof Error ? err.message : 'Failed to place order.');
     } finally {
       setIsSubmitting(false);
     }
@@ -220,8 +231,15 @@ export default function CheckoutPage() {
               <h2 className="text-lg sm:text-xl text-gray-900 mb-4 sm:mb-6">{t('checkout.paymentMethod')}</h2>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-400 transition-all duration-300">
-                  <input type="radio" name="payment" value="bank-transfer" checked={paymentMethod === 'bank-transfer'}
-                    onChange={(e) => setPaymentMethod(e.target.value)} className="text-pink-400 focus:ring-pink-400 flex-shrink-0" />
+                  <input
+                    type="checkbox"
+                    name="payment"
+                    checked={paymentMethod === 'bank-transfer'}
+                    onChange={(e) =>
+                      setPaymentMethod(e.target.checked ? 'bank-transfer' : '')
+                    }
+                    className="text-pink-400 focus:ring-pink-400 flex-shrink-0 w-4 h-4 rounded"
+                  />
                   <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 flex-shrink-0" />
                   <span className="flex-1 text-sm sm:text-base">{t('checkout.bankTransfer')}</span>
                 </label>

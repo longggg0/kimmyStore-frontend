@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
 import { useProductsPaginated } from '@/hook/useProduct';
@@ -53,6 +53,41 @@ export default function ProductsPage() {
     brandId: selectedBrandId,
     skinType: selectedSkinType,
   });
+
+  // Separate, lightweight fetch used only to figure out which categories the
+  // selected brand actually has products in — high limit, no other filters,
+  // so it isn't affected by search/category/skinType/pagination above.
+  // NOTE: if useProductsPaginated supports an `enabled` option, pass
+  // `enabled: selectedBrand !== 'all'` here too, so this doesn't fire at all
+  // when "All Brands" is selected.
+  const { data: brandProductsData } = useProductsPaginated({
+    page: 1,
+    limit: 1000,
+    brandId: selectedBrandId,
+  });
+
+  // Categories that the selected brand actually has products in.
+  // Falls back to the full category list when "All Brands" is selected.
+  const availableCategories = useMemo(() => {
+    if (selectedBrand === 'all') return categories;
+
+    const brandProducts = brandProductsData?.data ?? [];
+    const categoryNamesForBrand = new Set(
+      brandProducts
+        .map((p) => p.category?.name)
+        .filter((name): name is string => Boolean(name))
+    );
+
+    return ['all', ...apiCategories.filter((c) => categoryNamesForBrand.has(c.name)).map((c) => c.name)];
+  }, [selectedBrand, brandProductsData, apiCategories, categories]);
+
+  // If the currently selected category isn't valid for the newly selected
+  // brand, reset it back to "all" instead of showing zero results.
+  useEffect(() => {
+    if (selectedCategory !== 'all' && !availableCategories.includes(selectedCategory)) {
+      setSelectedCategory('all');
+    }
+  }, [availableCategories, selectedCategory]);
 
   const products = data?.data ?? [];
   const pagination = data?.pagination;
@@ -116,7 +151,7 @@ export default function ProductsPage() {
         </button>
         {categoryExpanded && (
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
+            {availableCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
