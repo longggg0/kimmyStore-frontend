@@ -46,6 +46,11 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
+  // Tracks whether we've already shown the out-of-stock / maxed-out
+  // toast for the CURRENT variant selection, so repeated clicks on a
+  // disabled-looking button don't spam the user.
+  const [stockAlertShown, setStockAlertShown] = useState(false);
+
   useEffect(() => {
     if (variants.length > 0 && !selectedColor) {
       setSelectedColor(variants[0].color);
@@ -107,6 +112,21 @@ export default function ProductDetailPage() {
   const isOutOfStock = !product || effectiveQty === 0;
   const isMaxedOut = !isOutOfStock && inCartQty >= effectiveQty;
   const remainingStock = Math.max(0, effectiveQty - inCartQty);
+  const isDisabled = isOutOfStock || isMaxedOut;
+
+  // Reset the alert flag once the item becomes available again
+  // (restocked, or cart qty freed up by removing items from cart).
+  useEffect(() => {
+    if (!isDisabled) {
+      setStockAlertShown(false);
+    }
+  }, [isDisabled]);
+
+  // Reset when switching to a different variant, so a newly-selected
+  // out-of-stock/maxed-out combo correctly alerts once too.
+  useEffect(() => {
+    setStockAlertShown(false);
+  }, [selectedVariant?.id, product?.id]);
 
   // Priority: exact selected variant's image -> any variant of the
   // selected color that has an image -> the base product image.
@@ -134,12 +154,18 @@ export default function ProductDetailPage() {
     }
 
     if (isOutOfStock) {
-      toast.error('This product is out of stock.');
+      if (!stockAlertShown) {
+        toast.error('This product is out of stock.');
+        setStockAlertShown(true);
+      }
       return;
     }
 
     if (isMaxedOut) {
-      toast.error(`Only ${effectiveQty} in stock. You already have ${inCartQty} in your cart.`);
+      if (!stockAlertShown) {
+        toast.error(`Only ${effectiveQty} in stock. You already have ${inCartQty} in your cart.`);
+        setStockAlertShown(true);
+      }
       return;
     }
 
@@ -382,86 +408,90 @@ export default function ProductDetailPage() {
                 {product.skinType}
               </span>
             </div>
+<div className="mb-6">
+  <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.quantity')}</h3>
+  <div className="flex items-center gap-3">
+    <button
+      onClick={() => {
+        const next = Math.max(1, quantity - 1);
+        setQuantity(next);
+        setQuantityInput(String(next));
+        setStockAlertShown(false); // moved away from the limit — re-arm the alert
+      }}
+      className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
+    >
+      -
+    </button>
+    <input
+      type="number"
+      inputMode="numeric"
+      min={1}
+      max={remainingStock || 1}
+      value={quantityInput}
+      disabled={isOutOfStock}
+      onChange={(e) => {
+        setQuantityInput(e.target.value);
+        setStockAlertShown(false); // manual edit — re-arm the alert
+      }}
+      onBlur={() => {
+        const parsed = parseInt(quantityInput, 10);
 
-            <div className="mb-6">
-              <h3 className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('detail.quantity')}</h3>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    const next = Math.max(1, quantity - 1);
-                    setQuantity(next);
-                    setQuantityInput(String(next));
-                  }}
-                  className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={remainingStock || 1}
-                  value={quantityInput}
-                  disabled={isOutOfStock}
-                  onChange={(e) => {
-                    setQuantityInput(e.target.value);
-                  }}
-                  onBlur={() => {
-                    const parsed = parseInt(quantityInput, 10);
+        if (quantityInput === '' || isNaN(parsed) || parsed < 1) {
+          setQuantity(1);
+          setQuantityInput('1');
+          return;
+        }
 
-                    if (quantityInput === '' || isNaN(parsed) || parsed < 1) {
-                      setQuantity(1);
-                      setQuantityInput('1');
-                      return;
-                    }
+        if (parsed > remainingStock) {
+          toast.error(
+            remainingStock === 0
+              ? 'No more stock available for this product.'
+              : `Only ${remainingStock} available — quantity set to ${remainingStock}.`
+          );
+          setQuantity(remainingStock);
+          setQuantityInput(String(remainingStock));
+          return;
+        }
 
-                    if (parsed > remainingStock) {
-                      toast.error(
-                        remainingStock === 0
-                          ? 'No more stock available for this product.'
-                          : `Only ${remainingStock} available — quantity set to ${remainingStock}.`
-                      );
-                      setQuantity(remainingStock);
-                      setQuantityInput(String(remainingStock));
-                      return;
-                    }
-
-                    setQuantity(parsed);
-                    setQuantityInput(String(parsed));
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') e.currentTarget.blur();
-                  }}
-                  className="text-base sm:text-lg w-14 sm:w-16 text-center border-2 border-gray-200 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <button
-                  onClick={() => {
-                    if (quantity >= remainingStock) {
-                      toast.error(
-                        remainingStock === 0
-                          ? 'No more stock available for this product.'
-                          : `Only ${remainingStock} more available to add.`
-                      );
-                      return;
-                    }
-                    const next = quantity + 1;
-                    setQuantity(next);
-                    setQuantityInput(String(next));
-                  }}
-                  disabled={isOutOfStock}
-                  className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+        setQuantity(parsed);
+        setQuantityInput(String(parsed));
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+      className="text-base sm:text-lg w-14 sm:w-16 text-center border-2 border-gray-200 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+    />
+    <button
+      onClick={() => {
+        if (quantity >= remainingStock) {
+          if (!stockAlertShown) {
+            toast.error(
+              remainingStock === 0
+                ? 'No more stock available for this product.'
+                : `Only ${remainingStock} more available to add.`
+            );
+            setStockAlertShown(true);
+          }
+          return;
+        }
+        const next = quantity + 1;
+        setQuantity(next);
+        setQuantityInput(String(next));
+      }}
+      disabled={isOutOfStock}
+      className="w-10 h-10 sm:w-11 sm:h-11 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      +
+    </button>
+  </div>
+</div>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <button
                 onClick={handleAddToCart}
-                aria-disabled={isOutOfStock || isMaxedOut}
+                aria-disabled={isDisabled}
                 className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-full transition-all duration-300 text-sm sm:text-base
-                  ${isOutOfStock || isMaxedOut
+                  ${isDisabled
                     ? 'bg-gray-300 text-white cursor-not-allowed hover:bg-gray-300'
                     : added
                       ? 'bg-pink-500 text-white'

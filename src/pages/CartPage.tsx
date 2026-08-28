@@ -123,7 +123,7 @@ export default function CartPage() {
                       <div className="flex justify-between gap-2 sm:gap-4 mb-2 sm:mb-3">
                         <div className="min-w-0">
                           <div className="text-[10px] sm:text-xs text-pink-400 mb-1 uppercase tracking-wider">
-                            {item.product.category.name}
+                            {item.product.category?.name ?? 'Uncategorized'}
                           </div>
                           <h3 className="text-sm sm:text-base md:text-lg mb-1 line-clamp-1" style={{ color: '#333333' }}>
                             {item.product.name}

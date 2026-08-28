@@ -4,21 +4,35 @@ export interface Product {
   categoryId: number;
   brandId: number | null;
   price: string;
+  originalPrice: string | null;
   qty: number;
   skinType: string;
   size: string;
   description: string;
   isActive: boolean;
+  createdAt: string;
   updatedAt: string;
   category: {
     id: number;
     name: string;
-  };
+    isActive: boolean | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
   brand: {
     id: number;
     name: string;
     image: string;
+    createdAt: string;
+    updatedAt: string;
   } | null;
+  promotion: {
+    id: number;
+    discountPercent: number;
+    [key: string]: unknown;
+  } | null;
+  discountedPrice: string | null;
+  saving: string | null;
   productImages?: ProductImage[];
 }
 

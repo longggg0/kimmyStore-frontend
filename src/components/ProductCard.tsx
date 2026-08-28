@@ -22,6 +22,11 @@ export default function ProductCard({ product }: { product: Product }) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
+  // Tracks whether we've already shown the out-of-stock / maxed-out
+  // toast for the CURRENT variant selection, so repeated clicks on a
+  // disabled button don't spam the user.
+  const [stockAlertShown, setStockAlertShown] = useState(false);
+
   useEffect(() => {
     if (variants.length > 0 && !selectedColor) {
       setSelectedColor(variants[0].color);
@@ -67,6 +72,21 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const isOutOfStock = effectiveQty === 0;
   const isMaxedOut = !isOutOfStock && inCartQty >= effectiveQty;
+  const isDisabled = isOutOfStock || isMaxedOut;
+
+  // Reset the "already alerted" flag once the item is no longer
+  // out of stock / maxed out (e.g. restocked, or cart qty freed up).
+  useEffect(() => {
+    if (!isDisabled) {
+      setStockAlertShown(false);
+    }
+  }, [isDisabled]);
+
+  // Also reset when the user switches to a different variant, so a
+  // newly-selected out-of-stock variant correctly alerts once too.
+  useEffect(() => {
+    setStockAlertShown(false);
+  }, [selectedVariant?.id, product.id]);
 
   const cardImage = hasVariants && selectedVariant?.imageUrl
     ? selectedVariant.imageUrl
@@ -89,12 +109,18 @@ export default function ProductCard({ product }: { product: Product }) {
     }
 
     if (isOutOfStock) {
-      toast.error('This product is out of stock.');
+      if (!stockAlertShown) {
+        toast.error('This product is out of stock.');
+        setStockAlertShown(true);
+      }
       return;
     }
 
     if (isMaxedOut) {
-      toast.error(`Only ${effectiveQty} in stock. You already have ${inCartQty} in your cart.`);
+      if (!stockAlertShown) {
+        toast.error(`Only ${effectiveQty} in stock. You already have ${inCartQty} in your cart.`);
+        setStockAlertShown(true);
+      }
       return;
     }
 
@@ -147,7 +173,7 @@ export default function ProductCard({ product }: { product: Product }) {
       <div className="p-2.5 sm:p-4 flex flex-col flex-grow">
         <div className="mb-1.5 sm:mb-2 h-4 sm:h-5">
           <span className="inline-block bg-pink-50 text-pink-500 px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] uppercase tracking-wider truncate max-w-full">
-            {product.category.name}
+              {product.category?.name ?? 'Uncategorized'}
           </span>
         </div>
 
@@ -224,14 +250,14 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </p>
 
-        <button
-          onClick={handleAddToCart}
-          aria-disabled={isOutOfStock || isMaxedOut}
-          className={`w-full mt-auto px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-white
-    ${isOutOfStock || isMaxedOut ? 'bg-gray-300 cursor-not-allowed hover:bg-gray-300' : 'bg-pink-500 hover:bg-pink-500'}
+<button
+  onClick={handleAddToCart}
+  aria-disabled={isDisabled}
+  className={`w-full mt-auto px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-white
+    ${isDisabled ? 'bg-gray-300 cursor-not-allowed hover:bg-gray-300' : 'bg-pink-500 hover:bg-pink-500'}
     ${added ? 'shadow-[inset_0_2px_8px_rgba(0,0,0,0.25)]' : ''}
   `}
-        >
+>
           {added ? (
             <>
               <Check className="w-3 h-3 sm:w-4 sm:h-4" />

@@ -22,6 +22,11 @@ export default function ProductsPage() {
   const [categoryExpanded, setCategoryExpanded] = useState(true);
   const [brandExpanded, setBrandExpanded] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  // The pager will never show more pages than this. Starts equal to
+  // computedTotalPages but gets clamped down if we ever land on a page
+  // that comes back with zero items (e.g. the API's total count doesn't
+  // perfectly match the filtered result set).
+  const [maxKnownPages, setMaxKnownPages] = useState(1);
   const { clearCart } = useCart();
   const limit = 8;
 
@@ -91,7 +96,7 @@ export default function ProductsPage() {
 
   const products = data?.data ?? [];
   const pagination = data?.pagination;
-  const totalPages = pagination ? Math.ceil(pagination.total / limit) : 1;
+  const computedTotalPages = pagination ? Math.ceil(pagination.total / limit) : 1;
 
   const sorted = [...products].sort((a, b) => {
     if (sortBy === 'price-asc') return parseFloat(a.price) - parseFloat(b.price);
@@ -103,6 +108,25 @@ export default function ProductsPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory, selectedBrand, selectedSkinType, sortBy]);
+
+  // Keep the known-good page ceiling in sync whenever the API's own
+  // total-page estimate changes (new filters, new search, etc).
+  useEffect(() => {
+    setMaxKnownPages(computedTotalPages);
+  }, [computedTotalPages]);
+
+  // If we land on a page beyond page 1 and it comes back with zero items,
+  // that page shouldn't exist — clamp the pager and bounce back one page.
+  // (Page 1 coming back empty just means "no results" and is handled by
+  // the existing empty-state UI below, so it's excluded here.)
+  useEffect(() => {
+    if (!isLoading && !isFetching && data && sorted.length === 0 && currentPage > 1) {
+      setMaxKnownPages(currentPage - 1);
+      setCurrentPage(currentPage - 1);
+    }
+  }, [data, isLoading, isFetching, sorted.length, currentPage]);
+
+  const totalPages = Math.min(computedTotalPages, maxKnownPages);
 
   useEffect(() => {
     const brandParam = searchParams.get('brand');
@@ -137,6 +161,41 @@ export default function ProductsPage() {
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.min(Math.max(1, page), totalPages));
+  };
+
+  // Windowed pagination: always show first page, last page, current page
+  // and its immediate neighbors, and '...' for any gaps in between.
+  // Does NOT affect data fetching — only which page buttons are rendered.
+  const getPageNumbers = (current: number, total: number): (number | 'ellipsis')[] => {
+    const delta = 1; // how many neighbor pages to show on each side of current
+    const pages: (number | 'ellipsis')[] = [];
+
+    if (total <= 0) return pages;
+
+    const range: number[] = [];
+    for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+      range.push(i);
+    }
+
+    pages.push(1);
+
+    if (range[0] > 2) {
+      pages.push('ellipsis');
+    }
+
+    pages.push(...range);
+
+    if (range.length > 0 && range[range.length - 1] < total - 1) {
+      pages.push('ellipsis');
+    } else if (range.length === 0 && total > 2) {
+      pages.push('ellipsis');
+    }
+
+    if (total > 1) {
+      pages.push(total);
+    }
+
+    return pages;
   };
 
   const FilterPanel = () => (
@@ -201,8 +260,8 @@ export default function ProductsPage() {
 
       <div className="mb-4">
         <h4 className="text-sm font-medium text-gray-900 mb-3">{t('filter.bySkinType')}</h4>
-        <div className="flex flex-wrap gap-2">
-          {['all', 'oily', 'dry', 'combination', 'sensitive', 'normal'].map((type) => (
+         <div className="flex flex-wrap gap-2">
+          {['all', 'oily', 'dry', 'sensitive', 'normal'].map((type) => (
             <button
               key={type}
               onClick={() => setSelectedSkinType(type)}
@@ -337,8 +396,9 @@ export default function ProductsPage() {
               </div>
             )}
 
-            {/* Pagination — driven by server-side totalPages, which now
-                correctly accounts for the skinType filter too. */}
+            {/* Pagination — clamped by totalPages, which now self-corrects
+                if the API's total count doesn't match the real filtered
+                result set (e.g. an empty trailing page). */}
             {!isError && data && totalPages > 1 && (
               <div className="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2 mt-6 sm:mt-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                 <button
@@ -349,19 +409,28 @@ export default function ProductsPage() {
                   Prev
                 </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg text-xs sm:text-sm transition-colors ${
-                      currentPage === page
-                        ? 'bg-pink-400 text-white'
-                        : 'border border-gray-300 text-gray-700 hover:border-pink-400 hover:text-pink-400'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {getPageNumbers(currentPage, totalPages).map((page, idx) =>
+                  page === 'ellipsis' ? (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-xs sm:text-sm text-gray-400"
+                    >
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg text-xs sm:text-sm transition-colors ${
+                        currentPage === page
+                          ? 'bg-pink-400 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:border-pink-400 hover:text-pink-400'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
 
                 <button
                   onClick={() => goToPage(currentPage + 1)}

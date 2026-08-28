@@ -99,7 +99,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <h2 className="text-2xl sm:text-3xl text-gray-900">{t('section.newArrivals')}</h2>
+            <Link to={"/productPage"}>
             <button className="text-sm sm:text-base text-pink-400 hover:text-pink-500">{t('section.viewAll')}</button>
+            </Link>
+            
           </div>
           {newArrivalsLoading ? (
             <ProductGridSkeleton />

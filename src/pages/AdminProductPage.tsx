@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "../components/AdminLayout";
 import { Search, Trash, ChevronLeft, ChevronRight } from "lucide-react";
 import { AddProductDialog } from "../components/AddProductDialog";
-import { useDeleteProduct, useProducts } from "@/hook/useProduct";
-// import { useCategory } from "@/hook/useCategory";
+import { useDeleteProduct, useProductsPaginated } from "@/hook/useProduct";
 import { EditProductDialog } from "@/components/EditProductDialog";
 import { useCategory } from "@/hook/useCategories";
+import { useGetBrands } from "@/hook/useBrand";
 import type { Product } from "@/types/Product";
 
 // Client-only field added for optimistic UI: shows the locally picked image
@@ -13,48 +13,111 @@ import type { Product } from "@/types/Product";
 type ProductWithPreview = Product & { imagePreview?: string };
 
 const PRODUCTS_PER_PAGE = 20;
+const SEARCH_DEBOUNCE_MS = 400;
 
 export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [imageBusters, setImageBusters] = useState<Record<number, number>>({});
   const [currentPage, setCurrentPage] = useState(1);
 
   const BASE_URL = import.meta.env.VITE_API_URL;
-  const { data, isLoading, isError } = useProducts();
   const { data: categories = [] } = useCategory();
+  const { data: brandData } = useGetBrands();
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
+  // Debounce search so we don't fire a server request on every keystroke.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  // Brand options for the filter dropdown. Sourced from the brands API
+  // (not just brands present in the current product list) so the filter
+  // stays complete even if a brand currently has zero products.
+  const brands = useMemo(() => brandData?.data ?? [], [brandData]);
+
+  const selectedBrandId = selectedBrand === "all"
+    ? undefined
+    : brands.find((b) => b.name === selectedBrand)?.id;
+
+  const selectedCategoryId = selectedCategory === "all"
+    ? undefined
+    : categories.find((c) => c.name === selectedCategory)?.id;
+
+  // Server-side pagination, search, and filtering — the route already
+  // supports page/limit/search/categoryId/brandId, so we send those
+  // directly instead of fetching everything and slicing on the client.
+  const { data, isLoading, isError, isFetching } = useProductsPaginated({
+    page: currentPage,
+    limit: PRODUCTS_PER_PAGE,
+    search: debouncedSearch || undefined,
+    categoryId: selectedCategoryId,
+    brandId: selectedBrandId,
+  });
+
+  // Separate, lightweight fetch used only to figure out which categories the
+  // selected brand actually has products in — high limit, no other filters,
+  // so it isn't affected by search/category/pagination above.
+  // NOTE: if useProductsPaginated supports an `enabled` option, pass
+  // `enabled: selectedBrand !== "all"` here too, so this doesn't fire at all
+  // when "All Brands" is selected.
+  const { data: brandProductsData } = useProductsPaginated({
+    page: 1,
+    limit: 1000,
+    brandId: selectedBrandId,
+  });
+
   const products = (data?.data ?? []) as ProductWithPreview[];
+  const pagination = data?.pagination;
+  const total = pagination?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PRODUCTS_PER_PAGE));
 
-  const filtered = useMemo(() => {
-    return products.filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
+  // Categories that the selected brand actually has products in.
+  // Falls back to the full category list when "All Brands" is selected.
+  const availableCategories = useMemo(() => {
+    if (selectedBrand === "all") return categories;
+
+    const brandProducts = brandProductsData?.data ?? [];
+    const categoryNamesForBrand = new Set(
+      brandProducts
+        .map((p) => p.category?.name)
+        .filter((name): name is string => Boolean(name))
     );
-  }, [products, search]);
 
-  // Reset to page 1 whenever the search query (or underlying data) changes,
-  // so the user doesn't get stranded on an out-of-range page.
+    return categories.filter((c) => categoryNamesForBrand.has(c.name));
+  }, [selectedBrand, brandProductsData, categories]);
+
+  // If the currently selected category isn't valid for the newly selected
+  // brand, reset it back to "all" instead of showing zero results.
+  useEffect(() => {
+    if (
+      selectedCategory !== "all" &&
+      !availableCategories.some((c) => c.name === selectedCategory)
+    ) {
+      setSelectedCategory("all");
+    }
+  }, [availableCategories, selectedCategory]);
+
+  // Reset to page 1 whenever the search query or filters change, so the
+  // user doesn't get stranded on a now out-of-range page.
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, products.length]);
+  }, [debouncedSearch, selectedBrand, selectedCategory]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCTS_PER_PAGE));
-
-  // Clamp current page if filtering shrinks the results below the current page.
+  // Clamp current page if the result set shrinks below the current page
+  // (e.g. a filter change reduces total pages while we're deep in the list).
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
 
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return filtered.slice(start, start + PRODUCTS_PER_PAGE);
-  }, [filtered, currentPage]);
-
-  const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * PRODUCTS_PER_PAGE + 1;
-  const endIndex = Math.min(currentPage * PRODUCTS_PER_PAGE, filtered.length);
+  const startIndex = total === 0 ? 0 : (currentPage - 1) * PRODUCTS_PER_PAGE + 1;
+  const endIndex = Math.min(currentPage * PRODUCTS_PER_PAGE, total);
 
   const goToPage = (page: number) => {
     if (page < 1 || page > totalPages) return;
@@ -116,17 +179,47 @@ export const AdminProductsPage: React.FC = () => {
           <AddProductDialog categories={categories} />
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-100
-              rounded-xl outline-none focus:border-gray-300 transition-colors text-gray-900 placeholder:text-gray-400"
-          />
+        {/* Search + Filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative max-w-sm w-full">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-100
+                rounded-xl outline-none focus:border-gray-300 transition-colors text-gray-900 placeholder:text-gray-400"
+            />
+          </div>
+
+          <select
+            value={selectedBrand}
+            onChange={(e) => setSelectedBrand(e.target.value)}
+            className="w-full sm:w-56 px-4 py-2.5 text-sm bg-white border border-gray-100
+              rounded-xl outline-none focus:border-gray-300 transition-colors text-gray-700"
+          >
+            <option value="all">All Brands</option>
+            {brands.map((b) => (
+              <option key={b.id} value={b.name}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full sm:w-56 px-4 py-2.5 text-sm bg-white border border-gray-100
+              rounded-xl outline-none focus:border-gray-300 transition-colors text-gray-700"
+          >
+            <option value="all">All Categories</option>
+            {availableCategories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Table */}
@@ -142,7 +235,7 @@ export const AdminProductsPage: React.FC = () => {
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className={isFetching ? "opacity-60 transition-opacity" : "transition-opacity"}>
                 {isLoading ? (
                   <tr>
                     <td colSpan={11} className="text-center py-12 text-sm text-gray-400">Loading...</td>
@@ -151,18 +244,18 @@ export const AdminProductsPage: React.FC = () => {
                   <tr>
                     <td colSpan={11} className="text-center py-12 text-sm text-red-400">Failed to load products.</td>
                   </tr>
-                ) : paginatedProducts.length === 0 ? (
+                ) : products.length === 0 ? (
                   <tr>
                     <td colSpan={11} className="text-center py-12 text-sm text-gray-400">No products found.</td>
                   </tr>
                 ) : (
-                  paginatedProducts.map((product, index) => {
+                  products.map((product, index) => {
                     const t = imageBusters[product.id] ?? new Date(product.updatedAt).getTime();
                     return (
                       <tr
                         key={product.id}
                         className={`hover:bg-gray-50 transition-colors ${
-                          index !== paginatedProducts.length - 1 ? "border-b border-gray-100" : ""
+                          index !== products.length - 1 ? "border-b border-gray-100" : ""
                         }`}
                       >
                         <td className="px-6 py-4 text-sm text-gray-400">{product.id}</td>
@@ -233,7 +326,7 @@ export const AdminProductsPage: React.FC = () => {
           </div>
 
           {/* Pagination Controls */}
-          {!isLoading && !isError && filtered.length > 0 && (
+          {!isLoading && !isError && total > 0 && (
             <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs font-normal text-gray-400">
                 Showing{" "}
@@ -241,7 +334,7 @@ export const AdminProductsPage: React.FC = () => {
                 -{" "}
                 <span className="font-medium text-gray-600">{endIndex}</span>{" "}
                 of{" "}
-                <span className="font-medium text-gray-600">{filtered.length}</span>{" "}
+                <span className="font-medium text-gray-600">{total}</span>{" "}
                 products
               </p>
 

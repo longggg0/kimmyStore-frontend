@@ -78,7 +78,7 @@ const BASE_URL = import.meta.env.VITE_API_URL ;
               <div className="p-4 flex flex-col flex-grow">
                 <div className="mb-2">
                   <span className="inline-block bg-pink-50 text-pink-500 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider">
-                    {product.category.name}
+                    {product.category?.name ?? 'Uncategorized'}
                   </span>
                 </div>
 

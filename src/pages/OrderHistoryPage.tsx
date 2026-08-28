@@ -1,4 +1,4 @@
-import { Copy, MapPin, Download, Phone, Mail, CheckCircle2, Package, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Copy, MapPin, Download, Phone, Mail, CheckCircle2, Package, ChevronLeft, ChevronRight, X, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '../Context/LanguageContext';
 import { useOrder } from '@/hook/useOrder';
@@ -8,6 +8,16 @@ import type { Order } from '@/types/order';
 import { Link } from 'react-router-dom';
 
 const PAGE_SIZE = 20;
+
+const isUrl = (value?: string) => {
+  if (!value) return false;
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 function OrderRow({ order, onClick }: { order: Order; onClick: () => void }) {
   const { t } = useLanguage();
@@ -51,6 +61,7 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const [downloading, setDownloading] = useState(false);
   const { t } = useLanguage();
   const customer = order.customers;
+  const locationIsUrl = isUrl(order.location);
 
   // Close on Escape, lock body scroll while open
   useEffect(() => {
@@ -168,7 +179,19 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
                   <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">{t('order.deliveryAddress')}</p>
                   <div className="flex items-start gap-2 min-w-0">
                     <MapPin className="w-4 h-4 text-[#ff6b9d] mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-900 break-words">{order.location}</p>
+                    {locationIsUrl ? (
+                      <a
+                        href={order.location}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-[#ff6b9d] underline decoration-pink-300 underline-offset-2 hover:text-pink-600 break-all inline-flex items-center gap-1"
+                      >
+                        {t('order.viewOnMap') ?? 'View location on map'}
+                        <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                      </a>
+                    ) : (
+                      <p className="text-sm text-gray-900 break-words">{order.location}</p>
+                    )}
                   </div>
                 </div>
               </div>
